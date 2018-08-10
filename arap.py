@@ -11,11 +11,10 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
 
     Returns: None, but should fill mask array
     """
-    empty = orig[0, 0, :]
+    empty = np.array([int(i) for i in orig[0, 0, :]])
     # bounds
     lo = empty - tolerance
     up = empty + tolerance
-    print(lo, up)
     # queue
     queue = deque()
     queue.append((0, 0))
@@ -28,9 +27,9 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
             continue
         if closed[y][x]:
             continue
+        closed[y][x] = True
         px = orig[y, x, :]
         if all([px[i] >= lo[i] and px[i] <= up[i] for i in range(len(px))]):
-            print(s)
             mask[y][x] = False
             for dx, dy in d:
                 queue.append((x + dx, y + dy))

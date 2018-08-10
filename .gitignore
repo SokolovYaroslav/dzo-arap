@@ -4,3 +4,4 @@ classes/__pycache__
 .vscode/
 arap.o
 libarap.dll
+*.pyc
