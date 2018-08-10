@@ -1,5 +1,6 @@
 import numpy as np
-from collections import deque, defaultdict
+from collections import deque
+from math import floor
 
 def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, tolerance: int) -> None:
     """
@@ -15,7 +16,7 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
     # bounds
     lo = empty - tolerance
     up = empty + tolerance
-    # queue
+    # queu
     queue = deque()
     queue.append((0, 0))
     d = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -38,13 +39,13 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
 def clear(orig: np.ndarray, data: np.ndarray, width: int, height: int):
     data[:, :] = orig[0, 0, :]
 
-def dot(homography, x, y, rx, ry):
+def dot(homography, x, y):
     H = homography.dot(np.array([x, y, 1]))
     rx = H[0] / H[2]
     ry = H[1] / H[2]
     return rx, ry
 
-def store(left : dict, right : dict, x : int, y : int) -> None:
+def store(left: dict, right: dict, x: int, y: int) -> None:
     if y in left:
         if x < left[y]:
             left[y] = x
@@ -54,48 +55,45 @@ def store(left : dict, right : dict, x : int, y : int) -> None:
         left[y], right[y] = x, x
     
 
-def points(left : dict, right : dict, swap : bool, x0 : int, y0 : int, x1 : int, y1 : int):
+def points(left: dict, right: dict, swap: bool, x0: int, y0: int, x1: int, y1: int):
     if swap:
         x0, y0 = y0, x0
         x1, y1 = y1, x1
-    
-    dx = abs(x1 - x0);
-    dy = abs(y1 - y0);
-
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
     if x0 > x1:
         x0, x1 = x1, x0
         y0, y1 = y1, y0
-
     if y1 < y0:
         y0 = -y0
         y1 = -y1
-
     D = 2 * dy - dx
-
-    // add
+    # add
     if swap:
         store(left, right, abs(y0), abs(x0))
     else:
         store(left, right, abs(x0), abs(y0))
-
     y = y0
     for x in range(x0 + 1, x1):
         D += 2 * dy
         if D > 0:
             y += 1
             D -= 2 * dx
-
-        // add
+        # add
         if swap:
             store(left, right, abs(y), abs(x))
         else:
             store(left, right, abs(x), abs(y))
 
-def rasterize(corners: np.ndarray, left: defaultdict(int), right: defaultdict(int)) -> None:
+def rasterize(corners: np.ndarray, left: dict, right: dict) -> None:
     for i in range(4):
         x0 = corners[i][0]
         y0 = corners[i][1]
-        
+        x1 = corners[(i + 1) % 4][0]
+        y1 = corners[(i + 1) % 4][1]
+        dx, dy = abs(x1 - x0), abs(y1 - y0)
+        points(left, right, dx <= dy, x0, y0, x1, y1)
+
 
 
 def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np.ndarray,
@@ -109,6 +107,25 @@ def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np
     height: int
     corners: np.ndarray of (x_coord, y_coord) with shape (4, )
     """
-    left = defaultdict(int)
-    right = defaultdict(int)
+    left = dict()
+    right = dict()
     rasterize(corners, left, right)
+    for y, x_left in left.items():
+        x_right = right[y]
+        for x in range(x_left, x_right + 1):
+            rx, ry = dot(homography, float(x), float(y))
+            lft, top = floor(rx), floor(ry)
+            rgt, btm = lft + 1, top + 1
+            if lft >= 0 and rgt < width and top >= 0 and btm < height:
+                if not mask[int(round(ry))][int(round(rx))]:
+                    continue
+                coefX = rx - float(lft)
+                coefY = ry - float(top)
+                tl = (1. - coefX) * (1. - coefY)
+                tr = coefX * (1. - coefY)
+                bl = (1. - coefX) * coefY
+                br = coefX * coefY
+                data[y][x] = tl * orig[top][lft] +\
+                             tr * orig[top][rgt] +\
+                             bl * orig[btm][lft] +\
+                             br * orig[btm][rgt]
