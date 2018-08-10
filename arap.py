@@ -11,7 +11,7 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
 
     Returns: None, but should fill mask array
     """
-    empty = orig[0, 0, :] & 255
+    empty = orig[0, 0, :]
     # bounds
     lo = empty - tolerance
     up = empty + tolerance
@@ -28,8 +28,7 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
             continue
         if closed[y][x]:
             continue
-        px = orig[y, x, :] & 255
-        print(px)
+        px = orig[y, x, :]
         if all([px[i] >= lo[i] and px[i] <= up[i] for i in range(len(px))]):
             print(s)
             mask[y][x] = False
