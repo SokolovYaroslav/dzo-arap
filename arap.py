@@ -31,7 +31,7 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
         px = orig[y, x, :] & 255
         print(px)
         if all([px[i] >= lo[i] and px[i] <= up[i] for i in range(len(px))]):
-            mask[y][x] = True
+            mask[y][x] = False
             for dx, dy in d:
                 queue.append((x + dx, y + dy))
 
