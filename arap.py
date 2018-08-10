@@ -33,8 +33,8 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
             for dx, dy in d:
                 queue.append((x + dx, y + dy))
 
-# def clear(orig, data, width, height):
-    # data = orig[0, 0, :]
+def clear(orig: np.ndarray, data: np.ndarray, width: int, height: int):
+    data = [[orig[0, 0, :] for _ in range(width)] for _ in range(height)]
 
 # def dot(double * homography, float x, float y, float &rx, float &ry):
     
