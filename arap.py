@@ -53,7 +53,6 @@ def store(left: dict, right: dict, x: int, y: int) -> None:
             right[y] = x
     else:
         left[y], right[y] = x, x
-    
 
 def points(left: dict, right: dict, swap: bool, x0: int, y0: int, x1: int, y1: int):
     if swap:
@@ -93,8 +92,6 @@ def rasterize(corners: np.ndarray, left: dict, right: dict) -> None:
         y1 = corners[(i + 1) % 4][1]
         dx, dy = abs(x1 - x0), abs(y1 - y0)
         points(left, right, dx <= dy, x0, y0, x1, y1)
-
-
 
 def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np.ndarray,
             width: int, height: int, corners: np.ndarray) -> None:
