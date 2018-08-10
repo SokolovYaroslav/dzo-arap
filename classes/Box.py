@@ -164,6 +164,8 @@ class Box():
             self.H_B[2*i] = t.x
             self.H_B[2*i+1] = t.y
 
+        self.H_A = self.H_A.astype(np.float64)
+        self.H_B = self.H_B.astype(np.float64)
         h = np.linalg.solve(self.H_A, self.H_B)
         self.H = np.linalg.inv(np.array([[h[0], h[1], h[2]],
                                          [h[3], h[4], h[5]],
@@ -175,5 +177,5 @@ class Box():
         self._homography()
 
         vert = np.array([(int(round(p.x)), int(round(p.y))) for p in self.boundary])
-        self._cw.project(self.H.ctypes, image.cmask, image.corig, image.cdata, image.width, image.height, vert.ctypes)
+        self._cw.project(self.H, image._mask, image._orig, image._data, image.width, image.height, vert)
 

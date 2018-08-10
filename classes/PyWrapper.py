@@ -7,22 +7,19 @@ class PyWrapper:
         self._lib = lib
 
     def mask(self, mask, orig, width, height, tolerance):
-        mask = self._lib.compute_mask(mask, orig, width, height, tolerance)
-        print(mask)
-        print(mask.shape)
-        print(mask.sum())
+        self._lib.compute_mask(mask, orig, width, height, tolerance)
 
     def clear(self, orig, data, width, height):
-        self._lib.clear(orig.data, data.data_as(c.POINTER(c.c_char)), width, height)
+        self._lib.clear(orig, data, width, height)
 
     def project(self, homography, mask, orig, data, width, height, corners):
 
         self._lib.project(
-            homography.data,
-            mask.data,
-            orig.data,
-            data.data,
+            homography,
+            mask,
+            orig,
+            data,
             width,
             height,
-            corners.data
+            corners
         )

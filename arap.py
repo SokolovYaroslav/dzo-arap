@@ -36,8 +36,9 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
                 queue.append((x + dx, y + dy))
     return mask
 
-def clear(orig: np.ndarray, data: np.ndarray, width: int, height: int):
+def clear(orig: np.ndarray, data: np.ndarray, width: int, height: int) -> np.ndarray:
     data[:, :] = orig[0, 0, :]
+    return data
 
 def dot(homography, x, y):
     H = homography.dot(np.array([x, y, 1]))
@@ -45,7 +46,7 @@ def dot(homography, x, y):
     ry = H[1] / H[2]
     return rx, ry
 
-def store(left: dict, right: dict, x: int, y: int) -> None:
+def store(left: dict, right: dict, x: int, y: int) -> (dict, dict):
     if y in left:
         if x < left[y]:
             left[y] = x
@@ -53,8 +54,9 @@ def store(left: dict, right: dict, x: int, y: int) -> None:
             right[y] = x
     else:
         left[y], right[y] = x, x
+    return left, right
 
-def points(left: dict, right: dict, swap: bool, x0: int, y0: int, x1: int, y1: int):
+def points(left: dict, right: dict, swap: bool, x0: int, y0: int, x1: int, y1: int) -> (dict, dict):
     if swap:
         x0, y0 = y0, x0
         x1, y1 = y1, x1
@@ -69,9 +71,9 @@ def points(left: dict, right: dict, swap: bool, x0: int, y0: int, x1: int, y1: i
     D = 2 * dy - dx
     # add
     if swap:
-        store(left, right, abs(y0), abs(x0))
+        left, right = store(left, right, abs(y0), abs(x0))
     else:
-        store(left, right, abs(x0), abs(y0))
+        left, right = store(left, right, abs(x0), abs(y0))
     y = y0
     for x in range(x0 + 1, x1):
         D += 2 * dy
@@ -80,11 +82,12 @@ def points(left: dict, right: dict, swap: bool, x0: int, y0: int, x1: int, y1: i
             D -= 2 * dx
         # add
         if swap:
-            store(left, right, abs(y), abs(x))
+            left, right = store(left, right, abs(y), abs(x))
         else:
-            store(left, right, abs(x), abs(y))
+            left, right = store(left, right, abs(x), abs(y))
+    return left, right
 
-def rasterize(corners: np.ndarray, left: dict, right: dict) -> None:
+def rasterize(corners: np.ndarray, left: dict, right: dict) -> (np.ndarray, dict, dict):
     for i in range(4):
         x0 = corners[i][0]
         y0 = corners[i][1]
@@ -92,6 +95,7 @@ def rasterize(corners: np.ndarray, left: dict, right: dict) -> None:
         y1 = corners[(i + 1) % 4][1]
         dx, dy = abs(x1 - x0), abs(y1 - y0)
         points(left, right, dx <= dy, x0, y0, x1, y1)
+    return corners, left, right
 
 def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np.ndarray,
             width: int, height: int, corners: np.ndarray) -> None:
@@ -106,7 +110,7 @@ def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np
     """
     left = dict()
     right = dict()
-    rasterize(corners, left, right)
+    corners, left, right = rasterize(corners, left, right)
     for y, x_left in left.items():
         x_right = right[y]
         for x in range(x_left, x_right + 1):

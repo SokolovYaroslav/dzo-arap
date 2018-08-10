@@ -206,7 +206,7 @@ class Grid:
         Image data are properly updated
         """
 
-        self.cw.clear(self._image.corig, self._image.cdata, self._image.width, self._image.height)
+        self.cw.clear(self._image._orig, self._image._data, self._image.width, self._image.height)
 
         for box in self._boxes:
             box.project(self._image)
