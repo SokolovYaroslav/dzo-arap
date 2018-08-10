@@ -7,5 +7,5 @@ all: project
 
 project: arap.cpp
 	$(CXX) -fPIC -c -o arap.o $<
-	$(CXX) -fPIC -shared -o libarap.dll arap.o $(LIB_FLAGS)
+	$(CXX) -shared -o libarap.dll arap.o $(LIB_FLAGS)
 
