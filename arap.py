@@ -60,8 +60,8 @@ def points(left : dict, right : dict, swap : bool, x0 : int, y0 : int, x1 : int,
         x0, y0 = y0, x0
         x1, y1 = y1, x1
     
-    dx = abs(x1 - x0);
-    dy = abs(y1 - y0);
+    dx = abs(x1 - x0)
+    dy = abs(y1 - y0)
 
     if x0 > x1:
         x0, x1 = x1, x0
@@ -73,7 +73,6 @@ def points(left : dict, right : dict, swap : bool, x0 : int, y0 : int, x1 : int,
 
     D = 2 * dy - dx
 
-    // add
     if swap:
         store(left, right, abs(y0), abs(x0))
     else:
@@ -86,7 +85,6 @@ def points(left : dict, right : dict, swap : bool, x0 : int, y0 : int, x1 : int,
             y += 1
             D -= 2 * dx
 
-        // add
         if swap:
             store(left, right, abs(y), abs(x))
         else:
