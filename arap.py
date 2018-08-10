@@ -44,17 +44,52 @@ def dot(homography, x, y, rx, ry):
     ry = H[1] / H[2]
     return rx, ry
 
-# def store(std::map<int,int> &left, std::map<int,int> &right, int x, int y):
-#     """
-#     Vrode o4evidno
-#     """
-#     pass
+def store(left : dict, right : dict, x : int, y : int) -> None:
+    if y in left:
+        if x < left[y]:
+            left[y] = x
+        elif x < right[y]:
+            right[y] = x
+    else:
+        left[y], right[y] = x, x
+    
 
-# def points(std::map<int, int> &left, std::map<int,int> &right, bool swap, int x0, int y0, int x1, int y1):
-#     """
-#     Nadeus', 4to to}|{e o4evidno
-#     """
-#     pass
+def points(left : dict, right : dict, swap : bool, x0 : int, y0 : int, x1 : int, y1 : int):
+    if swap:
+        x0, y0 = y0, x0
+        x1, y1 = y1, x1
+    
+    dx = abs(x1 - x0);
+    dy = abs(y1 - y0);
+
+    if x0 > x1:
+        x0, x1 = x1, x0
+        y0, y1 = y1, y0
+
+    if y1 < y0:
+        y0 = -y0
+        y1 = -y1
+
+    D = 2 * dy - dx
+
+    // add
+    if swap:
+        store(left, right, abs(y0), abs(x0))
+    else:
+        store(left, right, abs(x0), abs(y0))
+
+    y = y0
+    for x in range(x0 + 1, x1):
+        D += 2 * dy
+        if D > 0:
+            y += 1
+            D -= 2 * dx
+
+        // add
+        if swap:
+            store(left, right, abs(y), abs(x))
+        else:
+            store(left, right, abs(x), abs(y))
 
 def rasterize(corners: np.ndarray, left: defaultdict(int), right: defaultdict(int)) -> None:
     for i in range(4):
