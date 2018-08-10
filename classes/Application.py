@@ -4,12 +4,13 @@ from datetime import datetime
 from classes.ImageHelper import ImageHelper
 from classes.Grid import Grid
 from classes.CWrapper import CWrapper
+from classes.PyWrapper import PyWrapper
 
 
 class Application:
 
     def __init__(self, path):
-        self._cw = CWrapper()
+        self._cw = PyWrapper()
 
         self._window = tk.Tk()
 
