@@ -31,13 +31,15 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
         px = orig[y, x, :] & 255
         print(px)
         if all([px[i] >= lo[i] and px[i] <= up[i] for i in range(len(px))]):
+            print(s)
             mask[y][x] = False
             for dx, dy in d:
                 queue.append((x + dx, y + dy))
+    return mask
 
 def clear(orig: np.ndarray, data: np.ndarray, width: int, height: int):
     #Numpy smart enough for this
-    data = orig[0, 0, :]
+    data[:, :] = orig[0, 0, :]
 
 def dot(homography, x, y, rx, ry):
     H = homography.dot(np.array([x, y, 1]))
@@ -56,3 +58,18 @@ def dot(homography, x, y, rx, ry):
 #     Nadeus', 4to to}|{e o4evidno
 #     """
 #     pass
+
+def rasterize(int * corners, std::map<int,int> &left, std::map<int,int> &right) -> None:
+
+
+
+def project(homography, mask, orig, data, width, height, corners) -> None:
+    """
+    homography: np.ndarray of doubles with shape (3, 3)
+    mask: np.ndarray of bools with shape (height, width)
+    orig: np.ndarray of ints with shape (height, width, 3) (RGB channels)
+    data: np.ndarray of ints with shape (height, width, 3) (RGB channels)
+    width: int
+    height: int
+    corners: np.ndarray of (x_coord, y_coord) with shape (4, )
+    """
