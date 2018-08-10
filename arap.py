@@ -58,7 +58,7 @@ def dot(homography, x, y, rx, ry):
 #     """
 #     pass
 
-def rasterize(int * corners, std::map<int,int> &left, std::map<int,int> &right) -> None:
+#def rasterize(int * corners, std::map<int,int> &left, std::map<int,int> &right) -> None:
 
 
 
@@ -72,3 +72,4 @@ def project(homography, mask, orig, data, width, height, corners) -> None:
     height: int
     corners: np.ndarray of (x_coord, y_coord) with shape (4, )
     """
+    pass
