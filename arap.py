@@ -29,12 +29,16 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
             continue
         px = orig[y:x:] & 255
         if all([px[i] >= lo[i] and px[i] <= up[i] for i in len(px)]):
-            mask[y][x] = True
+            mask[y][x] = False
             for dx, dy in d:
                 queue.append((x + dx, y + dy))
 
 def clear(orig: np.ndarray, data: np.ndarray, width: int, height: int):
     data = [[orig[0, 0, :] for _ in range(width)] for _ in range(height)]
 
-# def dot(double * homography, float x, float y, float &rx, float &ry):
+def project():
+    pass
+
+def dot(homography: np.ndarray, x: float, y: float, rx: float, ry: float):
+    pass
     
