@@ -45,11 +45,15 @@ def dot(homography, x, y, rx, ry):
     ry = H[1] / H[2]
     return rx, ry
 
-# def store(std::map<int,int> &left, std::map<int,int> &right, int x, int y):
-#     """
-#     Vrode o4evidno
-#     """
-#     pass
+def store(left : dict, right : dict, x : int, y : int) -> None:
+    if y in left:
+        if x < left[y]:
+            left[y] = x
+        elif x < right[y]:
+            right[y] = x
+    else:
+        left[y], right[y] = x, x
+    
 
 # def points(std::map<int, int> &left, std::map<int,int> &right, bool swap, int x0, int y0, int x1, int y1):
 #     """
