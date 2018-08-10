@@ -1,5 +1,5 @@
 import numpy as np
-from collections import deque
+from collections import deque, defaultdict
 
 def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, tolerance: int) -> None:
     """
@@ -36,7 +36,6 @@ def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, to
     return mask
 
 def clear(orig: np.ndarray, data: np.ndarray, width: int, height: int):
-    #Numpy smart enough for this
     data[:, :] = orig[0, 0, :]
 
 def dot(homography, x, y, rx, ry):
@@ -90,11 +89,15 @@ def points(left : dict, right : dict, swap : bool, x0 : int, y0 : int, x1 : int,
         else:
             store(left, right, abs(x), abs(y))
 
-#def rasterize(int * corners, std::map<int,int> &left, std::map<int,int> &right) -> None:
+def rasterize(corners: np.ndarray, left: defaultdict(int), right: defaultdict(int)) -> None:
+    for i in range(4):
+        x0 = corners[i][0]
+        y0 = corners[i][1]
+        
 
 
-
-def project(homography, mask, orig, data, width, height, corners) -> None:
+def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np.ndarray,
+            width: int, height: int, corners: np.ndarray) -> None:
     """
     homography: np.ndarray of doubles with shape (3, 3)
     mask: np.ndarray of bools with shape (height, width)
@@ -104,4 +107,6 @@ def project(homography, mask, orig, data, width, height, corners) -> None:
     height: int
     corners: np.ndarray of (x_coord, y_coord) with shape (4, )
     """
-    pass
+    left = defaultdict(int)
+    right = defaultdict(int)
+    rasterize(corners, left, right)
