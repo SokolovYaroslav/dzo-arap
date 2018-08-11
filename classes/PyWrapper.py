@@ -1,4 +1,4 @@
-import arap as lib
+import carap as lib
 
 class PyWrapper:
     """ Wrapper for C functions """
