@@ -164,6 +164,19 @@ class Grid:
 
         return False
 
+    def create_bunch_cp(self, new_handles):
+        # TODO: rewrite cause it's slow for now
+        for handle_id, coord in new_handles.items():
+            x = coord[0]
+            y = coord[1]
+            for box in self._boxes:
+                if box.has_point(x, y):
+                    control = box.get_closest_boundary(x, y)
+                    control.weight = self.CONTROL_WEIGHT
+                    self._controls[handle_id] = [control, (control.x, control.y),\
+                                                 (control.x - x, control.y - y)]
+        self._update_weights()
+
     def remove_control_point(self, handle_id):
         if handle_id in self._controls:
             del self._controls[handle_id]

@@ -5,3 +5,4 @@ classes/__pycache__
 arap.o
 libarap.dll
 *.pyc
+venv/

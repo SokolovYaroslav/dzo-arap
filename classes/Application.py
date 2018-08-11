@@ -1,5 +1,6 @@
 import tkinter as tk
 from datetime import datetime
+import json
 
 from classes.ImageHelper import ImageHelper
 from classes.Grid import Grid
@@ -38,9 +39,12 @@ class Application:
         self._image.draw()
         self._grid.draw()
 
+        self.add_bunch('assets/sokolov_228_keypoints.json')
+
         self._run_once()
 
         self._window.mainloop()
+
 
     def _run_once(self):
 
@@ -65,6 +69,21 @@ class Application:
             self._t_last = dt.timestamp()
 
         self._loop = self._window.after(1, self._run_once)
+
+    def add_bunch(self, posepath):
+        with open(posepath, 'r') as f:
+            poss = json.load(f)
+        kpts = poss['people'][0]['pose_keypoints_2d']
+        print(len(kpts))
+        xs = kpts[::3]
+        ys = kpts[1::3]
+        new_handles = {}
+        for ptx, pty in zip(xs, ys):
+            h_id = self._image.create_handle(ptx, pty)
+            if h_id != -1:
+                new_handles[h_id] = (ptx, pty)
+        self._grid.create_bunch_cp(new_handles=new_handles)
+
 
     def select_handle(self, e):
         handle_id = self._image.select_handle(e.x, e.y)
