@@ -5,3 +5,6 @@ classes/__pycache__
 arap.o
 libarap.dll
 *.pyc
+build/
+*.c
+*.so

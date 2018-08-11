@@ -2,7 +2,6 @@ import math
 from classes.Point import Point
 from classes.Box import Box
 
-
 class Grid:
     """
     Creates and manipulates grid of Boxes over the image,
@@ -18,7 +17,7 @@ class Grid:
 
     def __init__(self, cw, image):
 
-        self.visible = False
+        self.visible = True
 
         self.cw = cw
 

@@ -1,6 +1,7 @@
 import numpy as np
 from collections import deque
 from math import floor, ceil
+from joblib import Parallel, delayed
 
 def round(x):
     c = ceil(x)
@@ -119,8 +120,11 @@ def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np
     left = dict()
     right = dict()
     corners, left, right = rasterize(corners, left, right)
-    for y, x_left in left.items():
-        x_right = right[y]
+
+    def update(point, data=data, orig=orig):
+        y, x_left, x_right = point
+        results = dict()
+        results[y] = dict()
         for x in range(x_left, x_right + 1):
             rx, ry = dot(homography, float(x), float(y))
             lft, top = floor(rx), floor(ry)
@@ -134,7 +138,18 @@ def project(homography: np.ndarray, mask: np.ndarray, orig: np.ndarray, data: np
                 tr = coefX * (1. - coefY)
                 bl = (1. - coefX) * coefY
                 br = coefX * coefY
-                data[y][x] = tl * orig[top][lft] +\
-                             tr * orig[top][rgt] +\
-                             bl * orig[btm][lft] +\
-                             br * orig[btm][rgt]
+                results[y][x] = tl * orig[top][lft] +\
+                                tr * orig[top][rgt] +\
+                                bl * orig[btm][lft] +\
+                                br * orig[btm][rgt]
+        return results
+    
+    y_all, x_left_all = zip(*left.items())
+    x_right_all = [right[y] for y in y_all]
+    results = Parallel(n_jobs=3)(delayed(update)(p) for p in zip(y_all, x_left_all, x_right_all))
+    for res in results:
+        for y in res.keys():
+            for x in res[y].keys():
+                data[y][x] = res[y][x]
+    # for p in zip(y_all, x_left_all, x_right_all):
+    #     update(p)
