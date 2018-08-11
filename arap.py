@@ -1,6 +1,14 @@
 import numpy as np
 from collections import deque
-from math import floor
+from math import floor, ceil
+
+def round(x):
+    c = ceil(x)
+    f = floor(x)
+    if c - x <= x - f:
+        return c
+    else:
+        return f
 
 def compute_mask(mask: np.ndarray, orig: np.ndarray, width: int, height: int, tolerance: int) -> None:
     """
