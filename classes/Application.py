@@ -79,7 +79,8 @@ class Application:
         ys = kpts[1::3]
         new_handles = {}
         for ptx, pty in zip(xs, ys):
-            h_id = self._image.create_handle(ptx, pty)
+            h_id = self._image.create_handle_nocheck(ptx, pty)
+            # it would never be -1 if nocheck method is used
             if h_id != -1:
                 new_handles[h_id] = (ptx, pty)
         self._grid.create_bunch_cp(new_handles=new_handles)

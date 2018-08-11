@@ -108,6 +108,14 @@ class ImageHelper:
         self._handles.add(handle_id)
         return handle_id
 
+    def create_handle_nocheck(self, x, y):
+        bbox = (x - self.HANDLE_RADIUS, y - self.HANDLE_RADIUS,
+                x + self.HANDLE_RADIUS, y + self.HANDLE_RADIUS)
+        handle_id = self._canvas.create_oval(bbox, fill="blue", outline="blue", tag="HANDLE")
+        self._handles.add(handle_id)
+        return handle_id
+
+
     def select_handle(self, x, y):
         """
         Checks if there is handle at given position
