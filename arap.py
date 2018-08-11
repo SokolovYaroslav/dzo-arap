@@ -58,7 +58,7 @@ def store(left: dict, right: dict, x: int, y: int) -> (dict, dict):
     if y in left:
         if x < left[y]:
             left[y] = x
-        elif x < right[y]:
+        elif x > right[y]:
             right[y] = x
     else:
         left[y], right[y] = x, x
