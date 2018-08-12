@@ -9,3 +9,9 @@ build/
 *.c
 *.so
 libarap
+venv/
+arap.o
+libarap.dll
+*.pyc
+venv/
+libarap

@@ -1,5 +1,6 @@
 import tkinter as tk
 from datetime import datetime
+import json
 
 from classes.ImageHelper import ImageHelper
 from classes.Grid import Grid
@@ -12,6 +13,16 @@ def save_image(path, img):
         print("Successfully saved image into", path)
     else:
         print("Couldn't save image into", path)
+
+def get_path(path_var, orig_path, index):
+    if orig_path is not None and orig_path is not False:
+       name = orig_path.split('/')[-1].split('.')[-2]
+       if index[0] == 0:
+           path_var.set(path_var.get().replace(name, name + str(index[0])))
+       else:
+           path_var.set(path_var.get().replace(name + str(index[0] - 1), name + str(index[0])))
+       index[0] += 1
+    return path_var.get()
 
 class Application:
 
@@ -27,12 +38,19 @@ class Application:
         self._canvas = tk.Canvas(self._window, width=self._image.width, height=self._image.height)
         self._canvas.pack()
 
+        enumerate = True # Set None or False to disable auto-enumerating paths
+        frame_index = [0]
         self._img_path = tk.StringVar()
         self._img_path.set('out/' + path.split('/')[-1])
         self._entry = tk.Entry(self._window, textvariable=self._img_path)
-        self._button = tk.Button(self._window, text="Save", command=lambda: save_image(self._img_path.get(), self._image._data.copy()))
-        self._entry.pack(side=tk.LEFT,padx=(30,20), expand=True, fill=tk.BOTH)
+        def save(*args):
+            save_image(get_path(self._img_path, orig_path=(enumerate and path), index=frame_index),
+                       self._image._data.copy()
+            )
+        self._button = tk.Button(self._window, text="Save", command=save)
+        self._entry.pack(side=tk.LEFT, padx=(30,20), expand=True, fill=tk.BOTH)
         self._button.pack(side=tk.RIGHT, padx=(10, 30))
+        self._window.bind("<space>", save)
 
         self._image.canvas = self._canvas
 
@@ -51,9 +69,12 @@ class Application:
         self._image.draw()
         self._grid.draw()
 
+        self.add_bunch('assets/sokolov_228_keypoints.json')
+
         self._run_once()
 
         self._window.mainloop()
+
 
     def _run_once(self):
 
@@ -78,6 +99,22 @@ class Application:
             self._t_last = dt.timestamp()
 
         self._loop = self._window.after(1, self._run_once)
+
+    def add_bunch(self, posepath):
+        with open(posepath, 'r') as f:
+            poss = json.load(f)
+        kpts = poss['people'][0]['pose_keypoints_2d']
+        print(len(kpts))
+        xs = kpts[::3]
+        ys = kpts[1::3]
+        new_handles = {}
+        for ptx, pty in zip(xs, ys):
+            h_id = self._image.create_handle_nocheck(ptx, pty)
+            # it would never be -1 if nocheck method is used
+            if h_id != -1:
+                new_handles[h_id] = (ptx, pty)
+        self._grid.create_bunch_cp(new_handles=new_handles)
+
 
     def select_handle(self, e):
         handle_id = self._image.select_handle(e.x, e.y)

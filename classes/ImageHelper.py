@@ -77,7 +77,7 @@ class ImageHelper:
     def _compute_mask(self):
         """ Compute mask of image - foreground is True, background is False """
         self._mask = np.full((self.height, self.width), True, dtype=np.bool)
-        self.cw.mask(self.cmask, self.corig, self.width, self.height, 10)
+        self.cw.mask(self._mask, self._orig, self.width, self.height, 10)
 
     def _update(self):
         """ Create new image from current data """
@@ -111,6 +111,14 @@ class ImageHelper:
         handle_id = self._canvas.create_oval(bbox, fill="blue", outline="blue", tag="HANDLE")
         self._handles.add(handle_id)
         return handle_id
+
+    def create_handle_nocheck(self, x, y):
+        bbox = (x - self.HANDLE_RADIUS, y - self.HANDLE_RADIUS,
+                x + self.HANDLE_RADIUS, y + self.HANDLE_RADIUS)
+        handle_id = self._canvas.create_oval(bbox, fill="blue", outline="blue", tag="HANDLE")
+        self._handles.add(handle_id)
+        return handle_id
+
 
     def select_handle(self, x, y):
         """
