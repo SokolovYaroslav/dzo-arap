@@ -174,6 +174,6 @@ class Box():
 
         self._homography()
 
-        vert = np.array([(int(round(p.x)), int(round(p.y))) for p in self.boundary])
-        self._cw.project(self.H.ctypes, image.cmask, image.corig, image.cdata, image.width, image.height, vert.ctypes)
+        vert = np.array([(int(round(p.x)), int(round(p.y))) for p in self.boundary], dtype=np.int32)
+        self._cw.project(self.H, image.cmask, image.corig, image.cdata, image.width, image.height, vert)
 

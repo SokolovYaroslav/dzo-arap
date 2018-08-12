@@ -54,21 +54,25 @@ class ImageHelper:
         """
         :return: Object for communicating with C interface for image mask
         """
-        return self._mask.ctypes
+        return self._mask
 
     @property
     def cdata(self):
         """
         :return: Object for communicating with C interface for current image data
         """
-        return self._data.ctypes
+        if self._data.dtype is not np.uint8:
+            self._data = self._data.astype(np.uint8)
+        return self._data
 
     @property
     def corig(self):
         """
         :return: Object for communicating with C interface for data of original image
         """
-        return self._orig.ctypes
+        if self._orig.dtype is not np.uint8:
+            self._orig = self._orig.astype(np.uint8)
+        return self._orig
 
     def _compute_mask(self):
         """ Compute mask of image - foreground is True, background is False """
