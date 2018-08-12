@@ -9,3 +9,4 @@ build/
 *.c
 *.so
 libarap
+venv/

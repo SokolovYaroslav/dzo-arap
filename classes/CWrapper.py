@@ -6,7 +6,7 @@ class CWrapper:
     """ Wrapper for C functions """
 
     def __init__(self):
-        self._lib = c.cdll.libarap
+        self._lib = c.CDLL('./libarap')
 
         #compute_mask API
         self.cmask = self._lib.compute_mask
