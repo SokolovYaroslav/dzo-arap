@@ -30,7 +30,7 @@ class ImageHelper:
         else:
             self._compute_mask()
         if args.save_mask:
-            cv2.imwrite(path.replace('assets', 'masks'), self._mask*255)
+            cv2.imwrite(args.path.replace('assets', 'masks'), self._mask*255)
 
         self._handles = set()
 

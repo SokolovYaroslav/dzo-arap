@@ -70,7 +70,7 @@ class Application:
         self._image.draw()
         self._grid.draw()
 
-        self.add_bunch('assets/sokolov_228_keypoints.json')
+        self.add_bunch(self._args.keypoints)
 
         self._run_once()
 
@@ -105,7 +105,6 @@ class Application:
         with open(posepath, 'r') as f:
             poss = json.load(f)
         kpts = poss['people'][0]['pose_keypoints_2d']
-        print(len(kpts))
         xs = kpts[::3]
         ys = kpts[1::3]
         new_handles = {}
