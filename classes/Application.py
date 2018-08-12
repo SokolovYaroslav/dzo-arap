@@ -66,7 +66,7 @@ class Application:
         self._canvas.bind(event, fn)
 
     def run(self):
-        self._grid = Grid(self._cw, self._image, self._args.grid)
+        self._grid = Grid(self._cw, self._image, self._args)
         self._image.draw()
         self._grid.draw()
 

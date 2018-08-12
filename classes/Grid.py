@@ -9,15 +9,17 @@ class Grid:
     via regularization and redraws the image
     """
 
-    BOX_SIZE = 32 
+    BOX_SIZE = 32
     CONTROL_WEIGHT = 100000
 
     iter = 0
     id = None
 
-    def __init__(self, cw, image, visible):
+    def __init__(self, cw, image, args):
 
-        self.visible = visible
+        self.visible = args.grid
+        self.BOX_SIZE = int(args.box_size)
+        self.CONTROL_WEIGHT = int(args.control_weight)
 
         self.cw = cw
 
