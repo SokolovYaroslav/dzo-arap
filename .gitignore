@@ -8,3 +8,4 @@ classes/__pycache__
 build/
 *.c
 *.so
+libarap
