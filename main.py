@@ -13,6 +13,7 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mask", default=None, help="custom mask path")
+parser.add_argument("--bodypart_mask", default=None, help="bodypart mask path")
 parser.add_argument("--box_size", default=32, type=int, help="box size for grid")
 parser.add_argument("--keypoints", help="path to keypoints")
 parser.add_argument("--path", default="assets/sokolov_228.jpg", help="path to image")

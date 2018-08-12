@@ -37,6 +37,8 @@ class ImageHelper:
                 print("Created directory", dir)
             cv2.imwrite(args.path.replace('assets', 'masks'), self._mask*255)
 
+        self.compute_background(args)
+
         self._handles = set()
 
     @property
@@ -84,6 +86,19 @@ class ImageHelper:
             self._orig = self._orig.astype(np.uint8)
         return self._orig
 
+    def compute_background(self, args):
+        self._background = self._orig * (1 - self._mask[:, :, np.newaxis])
+        #################
+        #SOME INPAINTING#
+        #################
+        if args.bodypart_mask is not None:
+            part_only_mask = cv2.imread(args.bodypart_mask, 0).astype(np.bool)
+            body_only_mask = (self._mask * (1 - part_only_mask)).astype(np.bool)
+            self._background[body_only_mask] = self._orig[body_only_mask]
+            self._mask = part_only_mask
+        
+
+        
     def _compute_mask(self):
         """ Compute mask of image - foreground is True, background is False """
         self._mask = np.full((self.height, self.width), True, dtype=np.bool)
