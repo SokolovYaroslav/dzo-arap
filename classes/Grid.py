@@ -9,7 +9,7 @@ class Grid:
     via regularization and redraws the image
     """
 
-    BOX_SIZE = 16 
+    BOX_SIZE = 32 
     CONTROL_WEIGHT = 100000
 
     iter = 0

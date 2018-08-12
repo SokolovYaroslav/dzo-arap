@@ -182,9 +182,9 @@ extern "C" void project(double * homography, bool * mask, char * orig, char * da
 
     std::unordered_map<int,int> left;
     std::unordered_map<int,int> right;
-    left.reserve(1024);
+    left.reserve(128);
     left.max_load_factor(0.25);
-    right.reserve(1024);
+    right.reserve(128);
     right.max_load_factor(0.25);
 
     rasterize(corners, left, right);
