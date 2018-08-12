@@ -1,5 +1,5 @@
 CXX=g++
-OPT = -O3 -fPIC
+OPT = -O3 -fPIC --std=c++17
 
 CXXFLAGS = $(INCLUDE_FLAG) $(OPT)
 

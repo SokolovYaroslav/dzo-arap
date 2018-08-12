@@ -2,7 +2,6 @@ import math
 from classes.Point import Point
 from classes.Box import Box
 
-
 class Grid:
     """
     Creates and manipulates grid of Boxes over the image,
@@ -10,7 +9,7 @@ class Grid:
     via regularization and redraws the image
     """
 
-    BOX_SIZE = 32
+    BOX_SIZE = 16 
     CONTROL_WEIGHT = 100000
 
     iter = 0
@@ -208,5 +207,6 @@ class Grid:
 
         self.cw.clear(self._image.corig, self._image.cdata, self._image.width, self._image.height)
 
+        pr = lambda box: box.project(self._image)
         for box in self._boxes:
-            box.project(self._image)
+            pr(box)
