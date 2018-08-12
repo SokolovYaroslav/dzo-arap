@@ -1,6 +1,6 @@
 from classes.Application import Application
 
-app = Application("assets/taz.jpg")
+app = Application("assets/sokolov_228.jpg")
 
 app.bind("<Button-1>", app.select_handle)
 app.bind("<ButtonRelease-1>", app.deselect_handle)
