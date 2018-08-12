@@ -26,8 +26,10 @@ def get_path(path_var, orig_path, index):
 
 class Application:
 
-    def __init__(self, path):
+    def __init__(self, args):
         self._cw = CWrapper()
+        self._args = args
+        path = args.path
 
         self._window = tk.Tk()
 
@@ -38,13 +40,12 @@ class Application:
         self._canvas = tk.Canvas(self._window, width=self._image.width, height=self._image.height)
         self._canvas.pack()
 
-        enumerate = True # Set None or False to disable auto-enumerating paths
         frame_index = [0]
         self._img_path = tk.StringVar()
         self._img_path.set('out/' + path.split('/')[-1])
         self._entry = tk.Entry(self._window, textvariable=self._img_path)
-        def save(*args):
-            save_image(get_path(self._img_path, orig_path=(enumerate and path), index=frame_index),
+        def save(*a):
+            save_image(get_path(self._img_path, orig_path=(args.enumerate and args.path), index=frame_index),
                        self._image._data.copy()
             )
         self._button = tk.Button(self._window, text="Save", command=save)
@@ -59,13 +60,13 @@ class Application:
         self._t_last = 0
 
     def load_image(self, path):
-        self._image = ImageHelper(self._cw, path)
+        self._image = ImageHelper(self._cw, self._args)
 
     def bind(self, event, fn):
         self._canvas.bind(event, fn)
 
     def run(self):
-        self._grid = Grid(self._cw, self._image)
+        self._grid = Grid(self._cw, self._image, self._args.grid)
         self._image.draw()
         self._grid.draw()
 

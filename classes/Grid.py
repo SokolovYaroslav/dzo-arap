@@ -15,9 +15,9 @@ class Grid:
     iter = 0
     id = None
 
-    def __init__(self, cw, image):
+    def __init__(self, cw, image, visible):
 
-        self.visible = False
+        self.visible = visible
 
         self.cw = cw
 

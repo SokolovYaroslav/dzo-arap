@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image, ImageTk
-
+import cv2
 
 class ImageHelper:
     """
@@ -11,11 +11,11 @@ class ImageHelper:
     """ radius of visual representation of control point """
     HANDLE_RADIUS = 5
 
-    def __init__(self, cw, path):
+    def __init__(self, cw, args):
         self.cw = cw
         self._canvas = None
 
-        self._im_obj = Image.open(path)
+        self._im_obj = Image.open(args.path)
         self._tk_obj = ImageTk.PhotoImage(self._im_obj)  # keeping reference for image to load
 
         self._size = self._im_obj.size
@@ -25,7 +25,12 @@ class ImageHelper:
         self._data = np.array(self._im_obj)  # current data of the image to draw
 
         self._mask = None
-        self._compute_mask()
+        if args.mask is not None:
+            self._mask = cv2.imread(args.mask, 0)
+        else:
+            self._compute_mask()
+        if args.save_mask:
+            cv2.imwrite(path.replace('assets', 'masks'), self._mask*255)
 
         self._handles = set()
 
