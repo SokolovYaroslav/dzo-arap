@@ -16,6 +16,8 @@ parser.add_argument(
     default=False,
     help="to automatically enumerate paths for saving deformed images",
 )
+parser.add_argument("--box_size", default=32, help="box size for grid")
+parser.add_argument("--control_weight", default=100000, help="control weight for grid")
 
 app = Application(parser.parse_args())
 
