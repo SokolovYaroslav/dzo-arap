@@ -164,6 +164,10 @@ class Box():
             self.H_B[2*i] = t.x
             self.H_B[2*i+1] = t.y
 
+        if self.H_A.dtype is not np.int64:
+            self.H_A = self.H_A.astype(np.int64)
+        if self.H_B.dtype is not np.int64:
+            self.H_B = self.H_B.astype(np.int64)
         h = np.linalg.solve(self.H_A, self.H_B)
         self.H = np.linalg.inv(np.array([[h[0], h[1], h[2]],
                                          [h[3], h[4], h[5]],
