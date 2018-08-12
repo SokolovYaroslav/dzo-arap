@@ -27,7 +27,7 @@ class ImageHelper:
 
         self._mask = None
         if args.mask is not None:
-            self._mask = cv2.imread(args.mask, 0)
+            self._mask = cv2.imread(args.mask, 0).astype(np.bool)
         else:
             self._compute_mask()
         if args.save_mask:
