@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image, ImageTk
 import cv2
+import os
 
 class ImageHelper:
     """
@@ -30,6 +31,10 @@ class ImageHelper:
         else:
             self._compute_mask()
         if args.save_mask:
+            dir = os.path.dirname(args.path).replace('assets', 'masks')
+            if not os.path.exists(dir):
+                os.mkdir(dir)
+                print("Created directory", dir)
             cv2.imwrite(args.path.replace('assets', 'masks'), self._mask*255)
 
         self._handles = set()

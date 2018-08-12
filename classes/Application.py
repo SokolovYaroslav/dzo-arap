@@ -6,8 +6,13 @@ from classes.ImageHelper import ImageHelper
 from classes.Grid import Grid
 from classes.CWrapper import CWrapper
 import cv2
+import os
 
 def save_image(path, img):
+    dir = os.path.dirname(path)
+    if not os.path.exists(dir):
+        os.mkdir(dir)
+        print("Created directory", dir)
     res = cv2.imwrite(path, img[:, :, ::-1])
     if res:
         print("Successfully saved image into", path)
@@ -70,7 +75,8 @@ class Application:
         self._image.draw()
         self._grid.draw()
 
-        self.add_bunch(self._args.keypoints)
+        if self._args.keypoints is not None:
+            self.add_bunch(self._args.keypoints)
 
         self._run_once()
 
