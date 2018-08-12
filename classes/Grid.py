@@ -219,8 +219,8 @@ class Grid:
         Create projection of current state
         Image data are properly updated
         """
-
-        self.cw.clear(self._image._orig, self._image._data, self._image.width, self._image.height)
+        self._image.clear()
+        #self.cw.clear(self._image._orig, self._image._data, self._image.width, self._image.height)
 
         pr = lambda box: box.project(self._image)
         for box in self._boxes:

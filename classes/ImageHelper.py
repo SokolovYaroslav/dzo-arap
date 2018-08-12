@@ -151,3 +151,9 @@ class ImageHelper:
         """ Removes handle """
         self._canvas.delete(handle_id)
         self._handles.remove(handle_id)
+
+    def clear(self, pixel=np.array([0, 0, 0])):
+        if self._background is not None:
+            self._data[:, :, :] = self._background
+            return
+        self._data[:, :] = pixel

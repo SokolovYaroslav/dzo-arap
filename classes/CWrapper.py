@@ -16,11 +16,11 @@ class CWrapper:
                                c.c_int, c.c_int, c.c_int]
 
         #clear API
-        self.cclear = self._lib.clear
-        self.cclear.restype = None
-        self.cclear.argtypes = [ndpointer(c.c_uint8, flags="C_CONTIGUOUS"),
-                                ndpointer(c.c_uint8, flags="C_CONTIGUOUS"),
-                                c.c_int, c.c_int]
+        # self.cclear = self._lib.clear
+        # self.cclear.restype = None
+        # self.cclear.argtypes = [ndpointer(c.c_uint8, flags="C_CONTIGUOUS"),
+        #                         ndpointer(c.c_uint8, flags="C_CONTIGUOUS"),
+        #                         c.c_int, c.c_int]
 
         #project API
         self.cproject = self._lib.project
@@ -35,8 +35,8 @@ class CWrapper:
     def mask(self, mask, orig, width, height, tolerance):
         self.cmask(mask, orig, width, height, tolerance)
 
-    def clear(self, orig, data, width, height):
-        self.cclear(orig, data, width, height)
+    # def clear(self, orig, data, width, height):
+    #     self.cclear(orig, data, width, height)
 
     def project(self, homography, mask, orig, data, width, height, corners):
         self.cproject(homography, mask, orig, data, width, height, corners)
