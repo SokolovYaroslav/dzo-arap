@@ -43,13 +43,14 @@ class Application:
         self._img_path = tk.StringVar()
         self._img_path.set('out/' + path.split('/')[-1])
         self._entry = tk.Entry(self._window, textvariable=self._img_path)
-        self._button = tk.Button(self._window, text="Save", command=lambda: save_image(
-                                                                                get_path(self._img_path, orig_path=(enumerate and path), index=frame_index),
-                                                                                self._image._data.copy()
-                                                                            )
-                                                                        )
+        def save(*args):
+            save_image(get_path(self._img_path, orig_path=(enumerate and path), index=frame_index),
+                       self._image._data.copy()
+            )
+        self._button = tk.Button(self._window, text="Save", command=save)
         self._entry.pack(side=tk.LEFT, padx=(30,20), expand=True, fill=tk.BOTH)
         self._button.pack(side=tk.RIGHT, padx=(10, 30))
+        self._window.bind("<space>", save)
 
         self._image.canvas = self._canvas
 
