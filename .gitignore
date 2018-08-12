@@ -6,3 +6,4 @@ arap.o
 libarap.dll
 *.pyc
 venv/
+libarap
