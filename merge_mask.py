@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 import os
 
-# In --in_dir must lay 6 png masks:
+# In --in_dir must lay at least body.png and at most 6 png masks:
 # body.png, head.png, left_leg.png, right_leg.png, left_arm.png, right_arm.png
 
 parser = argparse.ArgumentParser()
@@ -15,8 +15,10 @@ parts = ["body", "head", "left_leg", "right_leg", "left_arm", "right_arm"]
 parts_masks = []
 for part in parts:
     path = os.path.join(args.in_dir, part + ".png")
-    assert os.path.exists(path)
-    globals()[part] = cv2.imread(path, 0)
+    if not os.path.exists(path):
+        globals()[part] = np.zeros_like(body)
+    else:
+        globals()[part] = cv2.imread(path, 0)
     parts_masks.append(globals()[part])
 print("Found all parts.")
 
