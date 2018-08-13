@@ -18,9 +18,9 @@ class Masker:
         self.parts_masks = dict()
 
         if mask_path is not None:
-            self._mask_im = cv2.imread(self._mask_im)  # TODO: check if success
-            self.whole_mask = self._mask_im[:, :, 0]
-            if not self.is_binary(mask):
+            self._mask_im = cv2.imread(self._mask_path)  # TODO: check if success
+            self.whole_mask = self.mask2bool(self._mask_im[:, :, 0])
+            if not self.is_binary(self._mask_im):
                 self.body_mask = self.mask2bool(self._mask_im[:, :, 1])
                 for part in self.PARTS:
                     self.parts_masks[part] = self._mask_im[:, :, 2] == self.COLORS[part]
@@ -31,6 +31,9 @@ class Masker:
             print("Mask.py: Provide either mask as np.array, or path to mask")
             sys.exit(1)
 
+    def is_segmented(self):
+        return self.is_binary(self._mask_im)
+
     def is_binary(self, mask):
         # Check whether the layers are the same
         # TODO: more sophisticated method
@@ -39,15 +42,17 @@ class Masker:
         return np.sum(mask) == np.sum(mask[:, :, 0]) * 3
 
     def save(self, path):
-        return cv2.imwrite(path, self._mask_im * 255)
+        return cv2.imwrite(path, self._mask_im)
 
     def get_mask(self, part_name):
-        if part_name in self.PARTS:
-            return self.parts_mask[part_name]
+        if part_name in self.parts_masks:
+            return self.parts_masks[part_name]
         elif part_name == "whole" or part_name == "all":
             return self.whole_mask
         elif part_name == "body":
             return self.body_mask
+        else:
+            return None
 
     def mask2bool(self, mask):
         # TODO: more sophisticated method
