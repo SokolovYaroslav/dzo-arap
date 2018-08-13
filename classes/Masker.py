@@ -72,6 +72,11 @@ class Masker:
         contour = contours[0].reshape(-1, 2)[:,[1,0]]
         return contour
 
+    def bounding_box(self):
+        # [x0, y0, x1, y1] Note: y is counted from the top
+        contour = np.array(self.get_contour())
+        return [np.min(contour[:,1]), np.min(contour[:,0]), np.max(contour[:,1]), np.max(contour[:,0])]
+
     def mask2bool(self, mask):
         # TODO: more sophisticated method
         return mask.astype(np.bool)
