@@ -30,7 +30,6 @@ class ImageHelper:
         if args.mask is not None:
             # maybe need more sophisticated method to compute bool mask
             self._mask = cv2.imread(args.mask, 0).astype(np.bool)
-
         else:
             self._compute_mask()
         if args.save_mask:
@@ -154,3 +153,9 @@ class ImageHelper:
         """ Removes handle """
         self._canvas.delete(handle_id)
         self._handles.remove(handle_id)
+
+    def clear(self, pixel=np.array([0, 0, 0])):
+        if self._background is not None:
+            self._data[:, :, :] = self._background
+            return
+        self._data[:, :] = pixel
