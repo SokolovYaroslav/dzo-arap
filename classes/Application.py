@@ -78,7 +78,7 @@ class Application:
 
         if self._args.keypoints is not None:
             self.add_bunch(self._args.keypoints)
-        self._add_border_points()
+        self._add_border_points(self._args.num_bodypart_points, self._args.visible_bodypart_points)
 
         self._run_once()
 
@@ -118,23 +118,25 @@ class Application:
         self._add_points(zip(xs, ys))
 
     def _add_points(self, xys, visible=True):
-        new_handles = {}
-        for ptx, pty in xys:
-            h_id = self._image.create_handle_nocheck(ptx, pty)
-            # it would never be -1 if nocheck method is used
-            if h_id != -1:
-                new_handles[h_id] = (ptx, pty)
-        self._grid.create_bunch_cp(new_handles=new_handles)
+        if visible:
+            new_handles = {}
+            for ptx, pty in xys:
+                h_id = self._image.create_handle_nocheck(ptx, pty)
+                # it would never be -1 if nocheck method is used
+                if h_id != -1:
+                    new_handles[h_id] = (ptx, pty)
+            self._grid.create_bunch_cp(new_handles=new_handles)
+        else:
+            new_handles = {}
+            for i, [ptx, pty] in enumerate(xys):
+                new_handles[i] = (ptx, pty)
+            self._grid.create_bunch_cp(new_handles=new_handles)
 
-    def _add_border_points(self, num_points=5):
+    def _add_border_points(self, num_points=5, visible=False):
         if self._image._borders is not None:
             for i, border in enumerate(self._image._borders):
-                im = np.zeros_like(self._image._orig)
-                im[border[:, 1], border[:, 0]] = np.array([255,255,255])
-                cv2.imwrite('im%d.png' % i, im)
                 points_ind = list(map(int, np.linspace(0, border.shape[0] - 1, num_points)))
-                print(border.sum())
-                self._add_points(border[points_ind][:, [1,0]])
+                self._add_points(border[points_ind][:, [1,0]], visible=visible)
 
     def select_handle(self, e):
         handle_id = self._image.select_handle(e.x, e.y)
