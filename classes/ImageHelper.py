@@ -137,7 +137,7 @@ class ImageHelper:
         #TODO: SOME INPAINTING#
         #######################
         if len(self._masker.segmented_body_parts()) != 0:
-            body_mask = self._masker.mask2bool(self.body_mask)
+            body_mask = self._masker.mask2bool(self._masker.body_mask)
             body_aug_mask = body_mask.copy()
             parts_mask = np.zeros_like(body_mask, dtype=np.bool)
             for part in self._masker.segmented_body_parts():

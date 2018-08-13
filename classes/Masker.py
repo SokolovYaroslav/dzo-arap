@@ -49,7 +49,7 @@ class Masker:
         return self.parts_masks.keys()
 
     def save(self, path):
-        return cv2.imwrite(path, self._mask_im)
+        return cv2.imwrite(path, self._mask_im*(255/np.max(self._mask_im)))
 
     def get_mask(self, part_name):
         if part_name in self.parts_masks:
@@ -60,6 +60,13 @@ class Masker:
             return self.body_mask
         else:
             return None
+
+    def get_contour(self, continious=True):
+        # TODO: support getting mask & contour for deformed image
+        chain_approx_method = cv2.CHAIN_APPROX_NONE if continious else cv2.CHAIN_APPROX_SIMPLE
+        im2, contours, hierarchy = cv2.findContours(self.get_mask('whole').astype(np.uint8)*255, cv2.RETR_TREE, chain_approx_method)
+        contour = contours[0].reshape(-1, 2)
+        return contour
 
     def mask2bool(self, mask):
         # TODO: more sophisticated method
