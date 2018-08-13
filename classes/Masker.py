@@ -23,7 +23,9 @@ class Masker:
             if not self.is_binary(self._mask_im):
                 self.body_mask = self.mask2bool(self._mask_im[:, :, 1])
                 for part in self.PARTS:
-                    self.parts_masks[part] = self._mask_im[:, :, 2] == self.COLORS[part]
+                    part_mask = self._mask_im[:, :, 2] == self.COLORS[part]
+                    if part_mask.sum() > 0:
+                        self.parts_masks[part] = part_mask
         elif mask is not None:
             self.whole_mask = mask
             self._mask_im = mask.copy()
@@ -39,7 +41,12 @@ class Masker:
         # TODO: more sophisticated method
         if len(mask.shape) == 2:
             return True
-        return np.sum(mask) == np.sum(mask[:, :, 0]) * 3
+        diff1 = mask[:, :, 1] - mask[:, :, 0]
+        diff2 = mask[:, :, 2] - mask[:, :, 0]
+        return diff1.sum() + diff2.sum() == 0
+
+    def segmented_body_parts(self):
+        return self.parts_masks.keys()
 
     def save(self, path):
         return cv2.imwrite(path, self._mask_im)
