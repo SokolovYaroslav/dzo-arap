@@ -136,13 +136,17 @@ class ImageHelper:
         #######################
         #TODO: SOME INPAINTING#
         #######################
-        if args.bodypart_mask is not None:
-            part_only_mask = cv2.imread(args.bodypart_mask, 0).astype(np.bool)
-            body_only_mask = (self._mask * (1 - part_only_mask)).astype(np.bool)
-            binder_mask = get_binder_mask(part_only_mask, body_only_mask)
-            body_only_mask += binder_mask
-            self._background[body_only_mask] = self._orig[body_only_mask]
-            self._mask = part_only_mask
+        if len(self._masker.segmented_body_parts()) != 0:
+            body_mask = self._masker.mask2bool(self.body_mask)
+            body_aug_mask = body_mask.copy()
+            parts_mask = np.zeros_like(body_mask, dtype=np.bool)
+            for part in self._masker.segmented_body_parts():
+                part_mask = self._masker.mask2bool(self._masker.get_mask(part))
+                parts_mask += part_mask
+                binder_mask = get_binder_mask(part_mask, body_mask)
+                body_aug_mask += binder_mask
+            self._background[body_aug_mask] = self._orig[body_aug_mask]
+            self._mask = parts_mask
         
 
         
