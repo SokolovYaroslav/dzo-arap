@@ -45,6 +45,7 @@ class ImageHelper:
             path = args.path.replace('assets', 'masks')
             self._masker.save(path)
 
+        self._borders = None
         self.compute_background(args)
 
         self._handles = set()
@@ -119,21 +120,23 @@ class ImageHelper:
             binder_coords = part_coords[part_dists < self.BINDER_MASK_THRESHOLD, :]
             binder_mask = np.zeros_like(part_mask, dtype=np.bool)
             binder_mask[binder_coords[:, 0], binder_coords[:, 1]] = True
-            return binder_mask
+            return binder_mask, border
 
         self._background = self._orig * (1 - self._mask[:, :, np.newaxis])
         #######################
         #TODO: SOME INPAINTING#
         #######################
         if len(self._masker.segmented_body_parts()) != 0:
+            self._borders = []
             body_mask = self._masker.mask2bool(self._masker.body_mask)
             body_aug_mask = body_mask.copy()
             parts_mask = np.zeros_like(body_mask, dtype=np.bool)
             for part in self._masker.segmented_body_parts():
                 part_mask = self._masker.mask2bool(self._masker.get_mask(part))
                 parts_mask += part_mask
-                binder_mask = get_binder_mask(part_mask, body_mask)
+                binder_mask, border = get_binder_mask(part_mask, body_mask)
                 body_aug_mask += binder_mask
+                self._borders.append(border)
             self._background[body_aug_mask] = self._orig[body_aug_mask]
             self._mask = parts_mask
         
