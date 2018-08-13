@@ -17,21 +17,26 @@ class Masker:
         self.body_mask = None
         self.parts_masks = dict()
 
-        if mask_path is not None:
+        if self._mask_path is not None:
             self._mask_im = cv2.imread(self._mask_path)  # TODO: check if success
-            self.whole_mask = self.mask2bool(self._mask_im[:, :, 0])
-            if not self.is_binary(self._mask_im):
-                self.body_mask = self.mask2bool(self._mask_im[:, :, 1])
-                for part in self.PARTS:
-                    part_mask = self._mask_im[:, :, 2] == self.COLORS[part]
-                    if part_mask.sum() > 0:
-                        self.parts_masks[part] = part_mask
+            print(self._mask_path)
+            self._mask_init()
         elif mask is not None:
             self.whole_mask = mask
             self._mask_im = mask.copy()
         else:
             print("Mask.py: Provide either mask as np.array, or path to mask")
             sys.exit(1)
+
+    def _mask_init(self):
+        self.whole_mask = self.mask2bool(self._mask_im[:, :, 0])
+        if self.is_binary(self._mask_im):
+            return
+        self.body_mask = self.mask2bool(self._mask_im[:, :, 1])
+        for part in self.PARTS:
+            part_mask = self._mask_im[:, :, 2] == self.COLORS[part]
+            if part_mask.sum() > 0:
+                self.parts_masks[part] = part_mask
 
     def is_segmented(self):
         return self.is_binary(self._mask_im)
@@ -41,8 +46,8 @@ class Masker:
         # TODO: more sophisticated method
         if len(mask.shape) == 2:
             return True
-        diff1 = mask[:, :, 1] - mask[:, :, 0]
-        diff2 = mask[:, :, 2] - mask[:, :, 0]
+        diff1 = mask[:, :, 1] ^ mask[:, :, 0]
+        diff2 = mask[:, :, 2] ^ mask[:, :, 0]
         return diff1.sum() + diff2.sum() == 0
 
     def segmented_body_parts(self):
@@ -76,10 +81,30 @@ class Masker:
         contour = contours[cont_ind].reshape(-1, 2)[:,[1,0]]
         return contour
 
-    def bounding_box(self):
-        # [x0, y0, x1, y1] Note: y is counted from the top
-        contour = np.array(self.get_contour())
-        return [np.min(contour[:,1]), np.min(contour[:,0]), np.max(contour[:,1]), np.max(contour[:,0])]
+    def bounding_box(self, part="whole", numpy=True):
+        # [y0, x0, y1, x1] Note: y is counted from the top
+        contour = np.array(self.get_contour(part))
+        res = [np.min(contour[:,0]), np.min(contour[:,1]), np.max(contour[:,0]), np.max(contour[:,1]) ]
+        if numpy:
+            res = np.array(res).reshape(2, 2)
+        return res
+
+    def _center(self):
+        bbox = self.bounding_box()
+        return ( (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2 )
+
+    def crop(self, box, numpy=True):
+        if not numpy:
+            box = np.array(box).reshape(2, 2)
+        self._mask_im = self._mask_im[box[0, 0]: box[1,0], box[0,1]: box[1,1]]
+        self._mask_init()
+
+
+    def scale(self, width, height):
+        self._mask_im = cv2.resize(self._mask_im.astype(np.uint8)*255, (width, height))
+        self._mask_im = self.mask2bool(self._mask_im)
+        self._mask_init()
+
 
     def mask2bool(self, mask):
         # TODO: more sophisticated method
