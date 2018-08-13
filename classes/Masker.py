@@ -61,15 +61,19 @@ class Masker:
         else:
             return None
 
-    def get_contour(self, part="whole", continious=True):
+    def get_contour(self, parts=["whole"], continious=True):
         # TODO: support getting mask & contour for deformed image
-        if part not in ["whole", "body", "all"] and \
-           part not in self.segmented_body_parts():
-            print("Can't get contour for {}. No such body part found.".format(part))
-            return None
+        #if part not in ["whole", "body", "all"] and \
+        #   part not in self.segmented_body_parts():
+        #    print("Can't get contour for {}. No such body part found.".format(part))
+        #    return None
+        mask = sum([self.get_mask(part).astype(np.uint8) for part in parts])
+        mask = np.clip(mask, 0, 1)
+
         chain_approx_method = cv2.CHAIN_APPROX_NONE if continious else cv2.CHAIN_APPROX_SIMPLE
-        im2, contours, hierarchy = cv2.findContours(self.get_mask(part).astype(np.uint8)*255, cv2.RETR_TREE, chain_approx_method)
-        contour = contours[0].reshape(-1, 2)[:,[1,0]]
+        im2, contours, hierarchy = cv2.findContours(mask*255, cv2.RETR_TREE, chain_approx_method)
+        cont_ind = np.argmax(np.array([cont.shape[0] for cont in contours]))
+        contour = contours[cont_ind].reshape(-1, 2)[:,[1,0]]
         return contour
 
     def bounding_box(self):
