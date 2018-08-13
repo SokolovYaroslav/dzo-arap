@@ -8,6 +8,7 @@ from tqdm import tqdm
 from classes.CWrapper import CWrapper
 from classes.Grid import Grid
 from classes.ImageHelper import ImageHelper
+from math_utils import smooth_poses
 
 
 def str2bool(v):
@@ -40,6 +41,8 @@ class NoGuiRunner:
         kpt_files = os.listdir(self._args.keypoints_dir)
         kpt_files.sort(key=lambda e: int(e.split('_')[0]))
         self._handles = self.add_bunch(os.path.join(self._args.keypoints_dir, kpt_files[0]))
+
+        #smooth_poses(self._args.keypoints_dir, kpt_files[1:], 5)
 
         if not os.path.exists(self._args.output_dir):
             os.mkdir(self._args.output_dir)
