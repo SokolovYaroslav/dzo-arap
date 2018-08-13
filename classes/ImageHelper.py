@@ -45,6 +45,7 @@ class ImageHelper:
             path = args.path.replace('assets', 'masks')
             self._masker.save(path)
 
+        self._borders = None
         self.compute_background(args)
 
         self._handles = set()
@@ -95,12 +96,12 @@ class ImageHelper:
         return self._orig
 
     def compute_background(self, args):
-        def get_binder_mask(part_mask, body_mask):
+        def get_binder_mask(part_mask, body_mask, bodypart: str):
             part_coords =  np.argwhere(part_mask)
             full_mask = part_mask + body_mask
 
             body_cont = self._masker.get_contour("body")
-            full_cont = self._masker.get_contour("whole")
+            full_cont = self._masker.get_contour(["body", bodypart])
 
             #KOSTYL: set(body_cont) - set(full_cont)
             tmp_cont = np.zeros_like(full_mask, dtype=np.bool)
@@ -119,21 +120,28 @@ class ImageHelper:
             binder_coords = part_coords[part_dists < self.BINDER_MASK_THRESHOLD, :]
             binder_mask = np.zeros_like(part_mask, dtype=np.bool)
             binder_mask[binder_coords[:, 0], binder_coords[:, 1]] = True
-            return binder_mask
+            return binder_mask, border
 
         self._background = self._orig * (1 - self._mask[:, :, np.newaxis])
         #######################
         #TODO: SOME INPAINTING#
         #######################
         if len(self._masker.segmented_body_parts()) != 0:
+            self._borders = []
             body_mask = self._masker.mask2bool(self._masker.body_mask)
             body_aug_mask = body_mask.copy()
             parts_mask = np.zeros_like(body_mask, dtype=np.bool)
             for part in self._masker.segmented_body_parts():
                 part_mask = self._masker.mask2bool(self._masker.get_mask(part))
                 parts_mask += part_mask
-                binder_mask = get_binder_mask(part_mask, body_mask)
+                binder_mask, border = get_binder_mask(part_mask, body_mask, part)
                 body_aug_mask += binder_mask
+                if border[:, 0].max() - border[:, 0].min() > border[:, 1].max() - border[:, 1].min():
+                    indicies = border[:,0].argsort()
+                else:
+                    indicies = border[:,1].argsort()
+                border = border[indicies]
+                self._borders.append(border)
             self._background[body_aug_mask] = self._orig[body_aug_mask]
             self._mask = parts_mask
         
