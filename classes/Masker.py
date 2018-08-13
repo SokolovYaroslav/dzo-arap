@@ -72,6 +72,8 @@ class Masker:
         #   part not in self.segmented_body_parts():
         #    print("Can't get contour for {}. No such body part found.".format(part))
         #    return None
+        if type(parts) != list:
+            parts = [parts]
         mask = sum([self.get_mask(part).astype(np.uint8) for part in parts])
         mask = np.clip(mask, 0, 1)
 
