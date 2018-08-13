@@ -12,12 +12,13 @@ class ImageHelper:
     """ radius of visual representation of control point """
     HANDLE_RADIUS = 5
 
-    def __init__(self, cw, args):
+    def __init__(self, cw, args, gui = True):
         self.cw = cw
         self._canvas = None
 
         self._im_obj = Image.open(args.path)
-        self._tk_obj = ImageTk.PhotoImage(self._im_obj)  # keeping reference for image to load
+        if gui:
+            self._tk_obj = ImageTk.PhotoImage(self._im_obj)  # keeping reference for image to load
 
         self._size = self._im_obj.size
         self._pos = (self.width/2, self.height/2)
@@ -27,7 +28,9 @@ class ImageHelper:
 
         self._mask = None
         if args.mask is not None:
-            self._mask = cv2.imread(args.mask, 0)
+            # maybe need more sophisticated method to compute bool mask
+            self._mask = cv2.imread(args.mask, 0).astype(np.bool)
+
         else:
             self._compute_mask()
         if args.save_mask:

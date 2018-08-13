@@ -15,9 +15,10 @@ class Grid:
     iter = 0
     id = None
 
-    def __init__(self, cw, image, args):
+    def __init__(self, cw, image, args, gui=True):
 
-        self.visible = args.grid
+        if gui:
+            self.visible = args.grid
         self.BOX_SIZE = int(args.box_size)
         self.CONTROL_WEIGHT = int(args.control_weight)
 
@@ -167,14 +168,14 @@ class Grid:
 
     def create_bunch_cp(self, new_handles):
         # TODO: rewrite cause it's slow for now
-        for handle_id, coord in new_handles.items():
-            x = coord[0]
-            y = coord[1]
+        for i, h_obj in new_handles.items():
+            x = h_obj[0]
+            y = h_obj[1]
             for box in self._boxes:
                 if box.has_point(x, y):
                     control = box.get_closest_boundary(x, y)
                     control.weight = self.CONTROL_WEIGHT
-                    self._controls[handle_id] = [control, (control.x, control.y),\
+                    self._controls[i] = [control, (control.x, control.y),
                                                  (control.x - x, control.y - y)]
         self._update_weights()
 
