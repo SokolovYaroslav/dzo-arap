@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image, ImageTk
 import cv2
 import os
+from classes.Masker import Masker
 
 class ImageHelper:
     """
@@ -27,18 +28,22 @@ class ImageHelper:
         self._orig = np.array(self._im_obj)  # original data of the image immediately after load
         self._data = np.array(self._im_obj)  # current data of the image to draw
 
+        self._masker = None
         self._mask = None
         if args.mask is not None:
-            # maybe need more sophisticated method to compute bool mask
-            self._mask = cv2.imread(args.mask, 0).astype(np.bool)
+            self._masker = Masker(mask_path=args.mask)
+            self._mask = self._masker.whole_mask
         else:
             self._compute_mask()
+            self._masker = Masker(mask=self._mask)
+            self._mask = self._masker.whole_mask
         if args.save_mask:
             dir = os.path.dirname(args.path).replace('assets', 'masks')
             if not os.path.exists(dir):
                 os.mkdir(dir)
                 print("Created directory", dir)
-            cv2.imwrite(args.path.replace('assets', 'masks'), self._mask*255)
+            path = args.path.replace('assets', 'masks')
+            self._masker.save(path)
 
         self.compute_background(args)
 
