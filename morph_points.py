@@ -1,6 +1,7 @@
 from classes.Masker import Masker
 import cv2
 import numpy as np
+from scipy.spatial.distance import pdist, squareform
 
 
 def preprocess(im, masker, size=[0, 0]):
@@ -15,11 +16,10 @@ def preprocess(im, masker, size=[0, 0]):
             # then change width, height stays the same
             prev_width = size[1]
             size[1] = int(round(im.shape[1]/coefs[0]))
-            offset[1] = np.abs(int((size[1] - prev_width) / 2))
+            offset[1] = np.abs(int((size[1] - prev_size[1]) / 2))
         else: 
-            prev_height = size[0]
             size[0] = int(round(im.shape[0]/coefs[1]))
-            offset[0] = np.abs(int((size[0] - prev_height) / 2))
+            offset[0] = np.abs(int((size[0] - prev_size[0]) / 2))
         masker.scale(size[1], size[0])
         im = cv2.resize(im, tuple(size[::-1]))
         new_im = np.zeros(tuple(prev_size))
@@ -48,5 +48,25 @@ def get_points( from_tuple, to_tuple):
     cv2.imwrite(im_path, im_to)
     masker_to.save(mask_path)
     print("Saved 'to': \n\timage into {}\n\tmask into {}".format(im_path, mask_path))
-    return 
+
+    masker_to.scale(im_from.shape[0], im_from.shape[1])
+    cont_from = masker_from.get_contour(continious=False)
+    cont_to = masker_to.get_contour(continious=False)
+
+    return calculate_close_pairs(cont_from, cont_to)
+
+def calculate_close_pairs(pts1, pts2):
+    all_pts = np.concatenate((pts1, pts2))
+    dist = squareform(pdist(all_pts))
+
+    inf = np.max(dist) + 1
+    dist[:pts1.shape[0], :pts1.shape[0]] = inf
+    dist[pts1.shape[0]:, pts1.shape[0]:] = inf
+
+    indices = np.argmin(dist, axis=0)
+    if pts1.shape[0] < pts2.shape[0]:
+        res = np.concatenate((pts1, all_pts[indices[:pts1.shape[0]]]), axis=1)
+    else:
+        res = np.concatenate((pts2, all_pts[indices[pts1.shape[0]:]]), axis=1)
+    return res
     
