@@ -13,7 +13,7 @@ class ImageHelper:
     HANDLE_RADIUS = 5
 
     def __init__(self, cw, args, gui = True):
-        self.BINDER_MASK_THRESHOLD = 0.09
+        self.BINDER_MASK_THRESHOLD = args.bodypart_thresh
         self.cw = cw
         self._canvas = None
 
