@@ -8,13 +8,23 @@ def preprocess(im, masker, size=[0, 0]):
     im = im[bbox[0,0]:bbox[1,0], bbox[0,1]:bbox[1,1]] 
     masker.crop(bbox)
     if sum(size) > 0:
+        prev_size = [size[0], size[1], 3]
+        offset = [0, 0]
         coefs = np.array(im.shape[:2]) / np.array(size)
         if coefs[1] < coefs[0]: 
+            # then change width, height stays the same
+            prev_width = size[1]
             size[1] = int(round(im.shape[1]/coefs[0]))
+            offset[1] = np.abs(int((size[1] - prev_width) / 2))
         else: 
+            prev_height = size[0]
             size[0] = int(round(im.shape[0]/coefs[1]))
+            offset[0] = np.abs(int((size[0] - prev_height) / 2))
         masker.scale(size[1], size[0])
         im = cv2.resize(im, tuple(size[::-1]))
+        new_im = np.zeros(tuple(prev_size))
+        new_im[offset[0]:offset[0]+size[0], offset[1]:offset[1]+size[1]] = im
+        im = new_im
     return im, masker
 
 def get_points( from_tuple, to_tuple):
