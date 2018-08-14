@@ -28,7 +28,7 @@ def preprocess(im, masker, size=[0, 0]):
     return im, masker
 
 
-def get_points(from_tuple, to_tuple):
+def get_points(from_tuple, to_tuple, shuffle=True):
     # Takes two tuples like (im_path, mask_path)
     # Image extension is considered .png
     im_from = cv2.imread(from_tuple[0])
@@ -55,8 +55,10 @@ def get_points(from_tuple, to_tuple):
     cont_to = masker_to.get_contour(continious=False)
 
     pairs = calculate_close_pairs(cont_from, cont_to)
+    if shuffle:
+        np.random.shuffle(pairs)
     from_pts, to_pts = from_tuple[0].replace('.png', '.txt'), to_tuple[0].replace('.png', '.txt')
-    print("Saving points into {}: {} and {}".format(out_dir, from_pts, to_pts))
+    #print("Saving points into {}: {} and {}".format(out_dir, from_pts, to_pts))
     with open(from_pts, 'a') as f:
         for i in range(pairs.shape[0]):
             f.write("{} {}\n".format(pairs[i, 0], pairs[i, 1]))
