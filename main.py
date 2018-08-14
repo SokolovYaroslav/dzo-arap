@@ -10,6 +10,15 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
+def csv2dict(csv):
+    box_sizes = {}
+    body_parts = ["head", "right_arm", "left_arm", "right_leg", "left_leg"]
+    if csv is not None:
+        for body_part, box_size in zip(body_parts, list(map(int, csv.split(',')))):
+            box_sizes[body_part] = box_size
+        return box_sizes
+    return None
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mask", default=None, help="custom mask path")
@@ -18,6 +27,7 @@ parser.add_argument("--bodypart_thresh", type=float, default=0.075, help="thresh
 parser.add_argument("--num_bodypart_points", type=int, default=5, help="num points that will be automatically add at borders of bodyparts")
 parser.add_argument("--visible_bodypart_points", type=str2bool, default=False, help="whether show or not bodypart points")
 parser.add_argument("--box_size", default=32, type=int, help="box size for grid")
+parser.add_argument("--bodyparts_box_sizes", default=None, type=csv2dict, help="box sizes in follow order: head, right arm, left arm, right leg, left leg")
 parser.add_argument("--keypoints", help="path to keypoints")
 parser.add_argument("--path", default="assets/sokolov_228.jpg", help="path to image")
 parser.add_argument("--grid", default=False, type=str2bool, help="to show grid pass True")
