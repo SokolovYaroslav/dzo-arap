@@ -30,6 +30,7 @@ parser.add_argument("--box_size", default=32, type=int, help="box size for grid"
 parser.add_argument("--bodyparts_box_sizes", default=None, type=csv2dict, help="box sizes in follow order: head, right arm, left arm, right leg, left leg")
 parser.add_argument("--keypoints_dir", default="assets/frames/greeting_jsons", help="path to keypoints directory")
 parser.add_argument("--path", default="assets/frames/greeting_frames/45.png", help="path to image")
+parser.add_argument("--num_iterations", default=50, help="number of iterations to fit each pose")
 parser.add_argument("--grid", default=False, type=str2bool, help="to show grid pass True")
 parser.add_argument("--save_mask", default=str2bool, help="to save computed mask into masks/")
 parser.add_argument(

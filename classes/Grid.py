@@ -2,6 +2,7 @@ import math
 from classes.Point import Point
 from classes.Box import Box
 
+
 class Grid:
     """
     Creates and manipulates grid of Boxes over the image,
@@ -35,8 +36,8 @@ class Grid:
             lft = self._border(immask.T)
             rgt = self._image.width - self._border(immask.T[::-1])
 
-            width = rgt-lft
-            height = btm-top
+            width = rgt - lft
+            height = btm - top
 
             box_count = (int(math.ceil(width / box_size)), int(math.ceil(height / box_size)))
             box_x = lft - int((box_count[0] * box_size - width) / 2)
@@ -45,7 +46,7 @@ class Grid:
             # create Boxes over image
             for y in range(box_y, btm, box_size):
                 for x in range(box_x, rgt, box_size):
-                    if -1 != self._border(immask[y:y+box_size:1, x:x+box_size:1]):
+                    if -1 != self._border(immask[y:y + box_size:1, x:x + box_size:1]):
                         if x < 0 or x + box_size > self._image.width \
                                 or y < 0 or y + box_size > self._image.height:
                             continue
@@ -54,29 +55,24 @@ class Grid:
                             Box(
                                 self.cw,
                                 self._add_point(x, y),
-                                self._add_point(x+box_size, y),
-                                self._add_point(x+box_size, y+box_size),
-                                self._add_point(x, y+box_size)
+                                self._add_point(x + box_size, y),
+                                self._add_point(x + box_size, y + box_size),
+                                self._add_point(x, y + box_size)
                             )
                         )
 
         if len(self._image._masker.segmented_body_parts()) != 0:
-            for part in list(self._image._masker.segmented_body_parts()) + ['body']:
-                if part == 'body':
-                    immask = self._image._masker.body_mask
-                    box_size = self.BOX_SIZE
+            for part in list(self._image._masker.segmented_body_parts()):
+                immask = self._image._masker.mask2bool(self._image._masker.get_mask(part))
+                if args.bodyparts_box_sizes is not None:
+                    box_size = args.bodyparts_box_sizes[part]
                 else:
-                    immask = self._image._masker.mask2bool(self._image._masker.get_mask(part))
-                    if args.bodyparts_box_sizes is not None:
-                        box_size = args.bodyparts_box_sizes[part]
-                    else:
-                        box_size = self.BOX_SIZE
+                    box_size = self.BOX_SIZE
                 create_grid(immask, box_size)
         else:
             immask = self._image._mask
             box_size = self.BOX_SIZE
             create_grid(immask, box_size)
-        
 
         """
         Control points setup
@@ -155,9 +151,9 @@ class Grid:
             self._points[y][x].weight = self._points[y][x].weight
 
             for dx, dy in d:
-                nbr_x = x+dx
-                nbr_y = y+dy
-                nbr_w = w-self.BOX_SIZE**2
+                nbr_x = x + dx
+                nbr_y = y + dy
+                nbr_w = w - self.BOX_SIZE ** 2
                 if nbr_w > 1 \
                         and nbr_y in self._points and nbr_x in self._points[nbr_y]:
                     queue.append((nbr_x, nbr_y, nbr_w))
@@ -172,7 +168,6 @@ class Grid:
         """
         for box in self._boxes:
             if box.has_point(x, y):
-
                 control = box.get_closest_boundary(x, y)
                 control.weight = self.CONTROL_WEIGHT
 
@@ -184,17 +179,23 @@ class Grid:
         return False
 
     def create_bunch_cp(self, new_handles):
+        foundmask = []
         # TODO: rewrite cause it's slow for now
         for i, h_obj in new_handles.items():
             x = h_obj[0]
             y = h_obj[1]
+            box_found = False
             for box in self._boxes:
                 if box.has_point(x, y):
+                    box_found = True
                     control = box.get_closest_boundary(x, y)
                     control.weight = self.CONTROL_WEIGHT
                     self._controls[i] = [control, (control.x, control.y),
-                                                 (control.x - x, control.y - y)]
+                                         (control.x - x, control.y - y)]
+                    break
+            foundmask.append(box_found)
         self._update_weights()
+        return foundmask
 
     def remove_control_point(self, handle_id):
         if handle_id in self._controls:
@@ -204,7 +205,7 @@ class Grid:
     def set_control_target(self, handle_id, x, y):
         """ Change target of control point if exists """
         dx, dy = self._controls[handle_id][2]
-        self._controls[handle_id][1] = (x+dx, y+dy)
+        self._controls[handle_id][1] = (x + dx, y + dy)
 
     def draw(self):
         """
@@ -238,7 +239,7 @@ class Grid:
         Image data are properly updated
         """
         self._image.clear()
-        #self.cw.clear(self._image._orig, self._image._data, self._image.width, self._image.height)
+        # self.cw.clear(self._image._orig, self._image._data, self._image.width, self._image.height)
 
         pr = lambda box: box.project(self._image)
         for box in self._boxes:

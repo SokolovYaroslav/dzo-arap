@@ -77,21 +77,21 @@ class Application:
         self._grid = Grid(self._cw, self._image, self._args)
 
 
-        # poses = get_poses(self._args.keypoints_dir, with_hands=True)
-        # self._handles = self.add_bunch(poses[0])
-        #
-        # self._smoothed = smooth_poses(poses[1:], win_length=5)
+        poses = get_poses(self._args.keypoints_dir, with_hands=True)
+        self._handles, self._foundmask = self.add_bunch(poses[0])
+        print(self._foundmask)
+
 
         self._add_border_points(self._args.num_bodypart_points, self._args.visible_bodypart_points)
 
         self._image.draw()
         self._grid.draw()
 
-        # global epoch, it
-        # it = 1
-        # self.move_bunch(1)
-        # print('Epoch {0} started'.format(1))
-        # epoch = 2
+        global epoch, it
+        it = 1
+        self.move_bunch(1)
+        print('Epoch {0} started'.format(1))
+        epoch = 2
 
         self._run_once()
 
@@ -119,12 +119,12 @@ class Application:
 
             dt = datetime.now()
             self._t_last = dt.timestamp()
-            # it += 1
-            # if it >= int(self._args.num_iterations):
-            #     it = 1
-            #     self.move_bunch(epoch)
-            #     print('Epoch {0} started'.format(epoch))
-            #     epoch += 1
+            it += 1
+            if it >= int(self._args.num_iterations):
+                it = 1
+                self.move_bunch(epoch)
+                print('Epoch {0} started'.format(epoch))
+                epoch += 1
 
         self._loop = self._window.after(1, self._run_once)
 
@@ -141,12 +141,18 @@ class Application:
                 # it would never be -1 if nocheck method is used
                 if h_id != -1:
                     new_handles[h_id] = (ptx, pty)
-            self._grid.create_bunch_cp(new_handles=new_handles)
+            foundmask = self._grid.create_bunch_cp(new_handles=new_handles)
         else:
             for i, [ptx, pty] in enumerate(xys):
                 new_handles[i] = (ptx, pty)
-            self._grid.create_bunch_cp(new_handles=new_handles)
-        return new_handles
+            foundmask = self._grid.create_bunch_cp(new_handles=new_handles)
+
+        for k, f in zip(list(new_handles.keys()), foundmask):
+            if not f:
+                self._image.remove_handle(k)
+                del new_handles[k]
+
+        return (new_handles, foundmask)
 
     def _add_border_points(self, num_points=5, visible=False):
         if self._image._borders is not None:
@@ -185,8 +191,8 @@ class Application:
 
     def move_bunch(self, num):
         newpos = self._smoothed[num]
-        xs = newpos[0]
-        ys = newpos[1]
+        xs = newpos[0][self._foundmask]
+        ys = newpos[1][self._foundmask]
         i = 0
         for h_id, h_obj in self._handles.items():
             self._image.move_handle(h_id, xs[i], ys[i])
