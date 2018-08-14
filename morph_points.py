@@ -54,21 +54,21 @@ def get_points(from_tuple, to_tuple, shuffle=True):
     cont_from = masker_from.get_contour(continious=False)
     cont_to = masker_to.get_contour(continious=False)
 
-    pairs = calculate_close_pairs(cont_from, cont_to)
+    pairs = calculate_close_pairs(cont_from, cont_to, (im_from.shape[:2], im_to.shape[:2]))
     if shuffle:
         np.random.shuffle(pairs)
     from_pts, to_pts = from_tuple[0].replace('.png', '.txt'), to_tuple[0].replace('.png', '.txt')
     #print("Saving points into {}: {} and {}".format(out_dir, from_pts, to_pts))
     with open(from_pts, 'a') as f:
         for i in range(pairs.shape[0]):
-            f.write("{} {}\n".format(pairs[i, 0], pairs[i, 1]))
+            f.write("{} {}\n".format(pairs[i, 1], pairs[i, 0]))
     with open(to_pts, 'a') as f:
         for i in range(pairs.shape[0]):
-            f.write("{} {}\n".format(pairs[i, 2], pairs[i, 3]))
-    return
+            f.write("{} {}\n".format(pairs[i, 3], pairs[i, 2]))
+    return pairs
 
 
-def calculate_close_pairs(pts1, pts2):
+def calculate_close_pairs(pts1, pts2, shapes):
     all_pts = np.concatenate((pts1, pts2))
     dist = squareform(pdist(all_pts))
 
@@ -77,6 +77,21 @@ def calculate_close_pairs(pts1, pts2):
     dist[pts1.shape[0] :, pts1.shape[0] :] = inf
 
     indices = np.argmin(dist, axis=0)
+
+    # Scale points back
+    shape_from, shape_to = shapes[0], shapes[1]
+    def scale_back(point):
+        if shape_from[0] == shape_to[0]:
+            # differ in 1st, i.e. width
+            point[0] = point[0]*shape_to[0]/shape_from[0]
+            point[0] += np.abs(shape_to[0] - shape_from[0]) / 2
+        else:
+            point[1] = point[1]*shape_to[1]/shape_from[1]
+            point[1] += np.abs(shape_to[1] - shape_from[1]) / 2
+        return point
+
+    pts2 = np.apply_along_axis(scale_back, 0, pts2)
+    all_pts[pts1.shape[0]:] = pts2
     if pts1.shape[0] < pts2.shape[0]:
         res = np.concatenate((pts1, all_pts[indices[: pts1.shape[0]]]), axis=1)
     else:
