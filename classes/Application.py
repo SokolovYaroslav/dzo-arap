@@ -5,6 +5,7 @@ import json
 from classes.ImageHelper import ImageHelper
 from classes.Grid import Grid
 from classes.CWrapper import CWrapper
+from utils import smooth_poses, get_poses
 import cv2
 import os
 
@@ -72,13 +73,25 @@ class Application:
 
     def run(self):
         self._grid = Grid(self._cw, self._image, self._args)
+
+        poses = get_poses(self._args.keypoints_dir, with_hands=True)
+        self._handles = self.add_bunch(poses[0])
+
+        self._smoothed = smooth_poses(poses[1:], 5)
+
         self._image.draw()
         self._grid.draw()
 
-        if self._args.keypoints is not None:
-            self.add_bunch(self._args.keypoints)
+        global j, i
+        i = 1
+        self.move_bunch(1)
+        print('Epoch {0} started'.format(1))
+        j = 2
+
 
         self._run_once()
+
+
 
         self._window.mainloop()
 
@@ -87,6 +100,7 @@ class Application:
 
         self._grid.regularize()
 
+        global i, j
         dt = datetime.now()
         delta = dt.timestamp()-self._t_last
         if 0 < delta > 0.03:  # 0.03 - 30 FPS
@@ -104,22 +118,27 @@ class Application:
 
             dt = datetime.now()
             self._t_last = dt.timestamp()
+            i += 1
+            if i >= int(self._args.num_iterations):
+                i = 1
+                self.move_bunch(j)
+                print('Epoch {0} started'.format(j))
+                j += 1
 
         self._loop = self._window.after(1, self._run_once)
 
-    def add_bunch(self, posepath):
-        with open(posepath, 'r') as f:
-            poss = json.load(f)
-        kpts = poss['people'][0]['pose_keypoints_2d']
-        xs = kpts[::3]
-        ys = kpts[1::3]
+    def add_bunch(self, pose):
+        xs = pose[0]
+        ys = pose[1]
         new_handles = {}
         for ptx, pty in zip(xs, ys):
             h_id = self._image.create_handle_nocheck(ptx, pty)
             # it would never be -1 if nocheck method is used
             if h_id != -1:
                 new_handles[h_id] = (ptx, pty)
+
         self._grid.create_bunch_cp(new_handles=new_handles)
+        return new_handles
 
 
     def select_handle(self, e):
@@ -150,3 +169,13 @@ class Application:
         if self._active_handle != -1:
             self._image.move_handle(self._active_handle, e.x, e.y)
             self._grid.set_control_target(self._active_handle, e.x, e.y)
+
+    def move_bunch(self, num):
+        newpos = self._smoothed[num]
+        xs = newpos[0]
+        ys = newpos[1]
+        i = 0
+        for h_id, h_obj in self._handles.items():
+            self._image.move_handle(h_id, xs[i], ys[i])
+            self._grid.set_control_target(h_id, xs[i], ys[i])
+            i += 1
