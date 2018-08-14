@@ -5,9 +5,11 @@ import json
 from classes.ImageHelper import ImageHelper
 from classes.Grid import Grid
 from classes.CWrapper import CWrapper
+from classes.utils import *
 import cv2
 import os
 import numpy as np
+from collections import OrderedDict
 
 def save_image(path, img):
     dir = os.path.dirname(path)
@@ -73,12 +75,23 @@ class Application:
 
     def run(self):
         self._grid = Grid(self._cw, self._image, self._args)
+
+
+        # poses = get_poses(self._args.keypoints_dir, with_hands=True)
+        # self._handles = self.add_bunch(poses[0])
+        #
+        # self._smoothed = smooth_poses(poses[1:], win_length=5)
+
+        self._add_border_points(self._args.num_bodypart_points, self._args.visible_bodypart_points)
+
         self._image.draw()
         self._grid.draw()
 
-        if self._args.keypoints is not None:
-            self.add_bunch(self._args.keypoints)
-        self._add_border_points(self._args.num_bodypart_points, self._args.visible_bodypart_points)
+        # global epoch, it
+        # it = 1
+        # self.move_bunch(1)
+        # print('Epoch {0} started'.format(1))
+        # epoch = 2
 
         self._run_once()
 
@@ -88,7 +101,7 @@ class Application:
     def _run_once(self):
 
         self._grid.regularize()
-
+        global it, epoch
         dt = datetime.now()
         delta = dt.timestamp()-self._t_last
         if 0 < delta > 0.03:  # 0.03 - 30 FPS
@@ -106,20 +119,23 @@ class Application:
 
             dt = datetime.now()
             self._t_last = dt.timestamp()
+            # it += 1
+            # if it >= int(self._args.num_iterations):
+            #     it = 1
+            #     self.move_bunch(epoch)
+            #     print('Epoch {0} started'.format(epoch))
+            #     epoch += 1
 
         self._loop = self._window.after(1, self._run_once)
 
-    def add_bunch(self, posepath):
-        with open(posepath, 'r') as f:
-            poss = json.load(f)
-        kpts = poss['people'][0]['pose_keypoints_2d']
-        xs = kpts[::3]
-        ys = kpts[1::3]
-        self._add_points(zip(xs, ys))
+    def add_bunch(self, pose):
+        xs = pose[0]
+        ys = pose[1]
+        return self._add_points(zip(xs, ys))
 
     def _add_points(self, xys, visible=True):
+        new_handles = OrderedDict()
         if visible:
-            new_handles = {}
             for ptx, pty in xys:
                 h_id = self._image.create_handle_nocheck(ptx, pty)
                 # it would never be -1 if nocheck method is used
@@ -127,10 +143,10 @@ class Application:
                     new_handles[h_id] = (ptx, pty)
             self._grid.create_bunch_cp(new_handles=new_handles)
         else:
-            new_handles = {}
             for i, [ptx, pty] in enumerate(xys):
                 new_handles[i] = (ptx, pty)
             self._grid.create_bunch_cp(new_handles=new_handles)
+        return new_handles
 
     def _add_border_points(self, num_points=5, visible=False):
         if self._image._borders is not None:
@@ -166,3 +182,13 @@ class Application:
         if self._active_handle != -1:
             self._image.move_handle(self._active_handle, e.x, e.y)
             self._grid.set_control_target(self._active_handle, e.x, e.y)
+
+    def move_bunch(self, num):
+        newpos = self._smoothed[num]
+        xs = newpos[0]
+        ys = newpos[1]
+        i = 0
+        for h_id, h_obj in self._handles.items():
+            self._image.move_handle(h_id, xs[i], ys[i])
+            self._grid.set_control_target(h_id, xs[i], ys[i])
+            i += 1
