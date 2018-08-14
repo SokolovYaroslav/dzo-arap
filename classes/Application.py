@@ -77,7 +77,7 @@ class Application:
         self._grid = Grid(self._cw, self._image, self._args)
 
 
-        poses = get_poses(self._args.keypoints_dir, with_hands=True)
+        poses = get_poses(self._args.keypoints_dir, with_hands=True, interpolate_hands=True)
         self._handles, self._foundmask = self.add_bunch(poses[0])
         self._smoothed = smooth_poses(poses[1:], win_length=5)
 
