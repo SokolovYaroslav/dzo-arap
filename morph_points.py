@@ -30,7 +30,7 @@ def preprocess(im, masker, size=[0, 0]):
     return im, masker, size
 
 
-def get_points(from_tuple, to_tuple, shuffle=True):
+def get_points(from_tuple, to_tuple, shuffle=True, include_edge_points=True):
     # Takes two tuples like (im_path, mask_path)
     # Image extension is considered .png
     im_from = cv2.imread(from_tuple[0])
@@ -61,6 +61,15 @@ def get_points(from_tuple, to_tuple, shuffle=True):
     pairs = calculate_close_pairs(cont_from, cont_to, (im_from.shape[:2], to_shape[:2]))
     if shuffle:
         np.random.shuffle(pairs)
+
+    height, width = im_from.shape[:2]
+    corners = np.array([[0, 0], [0, width-1], [height-1, 0], [height-1, width-1]]).astype(int)
+    sides = np.array([[height / 2, 0], [height / 2, width-1], [0, width / 2], [height - 1, width / 2]]).astype(int)
+    edge_points = np.concatenate((corners, sides))
+    edge_points = np.repeat(edge_points, 2, axis=1)[:,[0,2,1,3]]
+    if include_edge_points:
+        pairs = np.concatenate((edge_points, pairs))
+
     from_pts, to_pts = (
         from_tuple[0].replace(".png", ".txt"),
         to_tuple[0].replace(".png", ".txt"),
