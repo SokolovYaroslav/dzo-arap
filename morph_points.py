@@ -2,6 +2,7 @@ from classes.Masker import Masker
 import cv2
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
+import sys
 
 
 def preprocess(im, masker, size=[0, 0]):
@@ -12,6 +13,7 @@ def preprocess(im, masker, size=[0, 0]):
         prev_size = [size[0], size[1], 3]
         offset = [0, 0]
         coefs = np.array(im.shape[:2]) / np.array(size)
+        real_shape = size.copy()
         if coefs[1] < coefs[0]:
             # then change width, height stays the same
             prev_width = size[1]
@@ -25,7 +27,7 @@ def preprocess(im, masker, size=[0, 0]):
         new_im = np.zeros(tuple(prev_size))
         new_im[offset[0] : offset[0] + size[0], offset[1] : offset[1] + size[1]] = im
         im = new_im
-    return im, masker
+    return im, masker, size
 
 
 def get_points(from_tuple, to_tuple, shuffle=True):
@@ -33,11 +35,13 @@ def get_points(from_tuple, to_tuple, shuffle=True):
     # Image extension is considered .png
     im_from = cv2.imread(from_tuple[0])
     masker_from = Masker(from_tuple[1])
-    im_from, masker_from = preprocess(im_from, masker_from)
+    im_from, masker_from, _ = preprocess(im_from, masker_from)
 
     im_to = cv2.imread(to_tuple[0])
     masker_to = Masker(to_tuple[1])
-    im_to, masker_to = preprocess(im_to, masker_to, size=list(im_from.shape[:2]))
+    im_to, masker_to, to_shape = preprocess(
+        im_to, masker_to, size=list(im_from.shape[:2])
+    )
     print(im_to.shape)
 
     im_path, mask_path = [f.replace(".png", "_processed.png") for f in from_tuple]
@@ -54,17 +58,20 @@ def get_points(from_tuple, to_tuple, shuffle=True):
     cont_from = masker_from.get_contour(continious=False)
     cont_to = masker_to.get_contour(continious=False)
 
-    pairs = calculate_close_pairs(cont_from, cont_to, (im_from.shape[:2], im_to.shape[:2]))
+    pairs = calculate_close_pairs(cont_from, cont_to, (im_from.shape[:2], to_shape[:2]))
     if shuffle:
         np.random.shuffle(pairs)
-    from_pts, to_pts = from_tuple[0].replace('.png', '.txt'), to_tuple[0].replace('.png', '.txt')
-    #print("Saving points into {}: {} and {}".format(out_dir, from_pts, to_pts))
-    with open(from_pts, 'a') as f:
+    from_pts, to_pts = (
+        from_tuple[0].replace(".png", ".txt"),
+        to_tuple[0].replace(".png", ".txt"),
+    )
+    print("Saving points into: {} and {}".format(from_pts, to_pts))
+    with open(from_pts, "w") as f:
         for i in range(pairs.shape[0]):
-            f.write("{} {}\n".format(pairs[i, 1], pairs[i, 0]))
-    with open(to_pts, 'a') as f:
+            f.write("{} {} \n".format(pairs[i, 1], pairs[i, 0]))
+    with open(to_pts, "w") as f:
         for i in range(pairs.shape[0]):
-            f.write("{} {}\n".format(pairs[i, 3], pairs[i, 2]))
+            f.write("{} {} \n".format(pairs[i, 3], pairs[i, 2]))
     return pairs
 
 
@@ -80,20 +87,25 @@ def calculate_close_pairs(pts1, pts2, shapes):
 
     # Scale points back
     shape_from, shape_to = shapes[0], shapes[1]
+    # print("Scale from {} to {}".format(shape_from, shape_to))
     def scale_back(point):
-        if shape_from[0] == shape_to[0]:
+        if shape_from[1] == shape_to[1]:
             # differ in 1st, i.e. width
-            point[0] = point[0]*shape_to[0]/shape_from[0]
-            point[0] += np.abs(shape_to[0] - shape_from[0]) / 2
+            point[0] += (shape_from[0] - shape_to[0]) / 2
+            point[0] = point[0] * (shape_to[0] / shape_from[0])
         else:
-            point[1] = point[1]*shape_to[1]/shape_from[1]
-            point[1] += np.abs(shape_to[1] - shape_from[1]) / 2
+            point[1] = point[1] * (shape_to[1] / shape_from[1])
+            point[1] += (shape_from[1] - shape_to[1]) / 2
         return point
 
-    pts2 = np.apply_along_axis(scale_back, 0, pts2)
-    all_pts[pts1.shape[0]:] = pts2
+    pts2 = np.apply_along_axis(scale_back, 1, pts2)
+    all_pts[pts1.shape[0] :] = pts2.copy()
     if pts1.shape[0] < pts2.shape[0]:
         res = np.concatenate((pts1, all_pts[indices[: pts1.shape[0]]]), axis=1)
     else:
         res = np.concatenate((pts2, all_pts[indices[pts1.shape[0] :]]), axis=1)
     return res
+
+
+if __name__ == "__main__":
+    get_points((sys.argv[1], sys.argv[2]), (sys.argv[3], sys.argv[4]))
