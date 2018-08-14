@@ -1,8 +1,7 @@
 from classes.Masker import Masker
 import cv2
 import numpy as np
-from scipy.spatial.distance import pdist, squareform
-
+from scipy.spatial.distance import pdist, squareform, euclidean
 
 def preprocess(im, masker, size=[0, 0]):
     bbox = masker.bounding_box(numpy=True)
@@ -59,24 +58,22 @@ def get_points(from_tuple, to_tuple, shuffle=True):
         np.random.shuffle(pairs)
     from_pts, to_pts = from_tuple[0].replace('.png', '.txt'), to_tuple[0].replace('.png', '.txt')
     #print("Saving points into {}: {} and {}".format(out_dir, from_pts, to_pts))
-    with open(from_pts, 'a') as f:
+    with open(from_pts, 'w') as f:
         for i in range(pairs.shape[0]):
             f.write("{} {}\n".format(pairs[i, 1], pairs[i, 0]))
-    with open(to_pts, 'a') as f:
+    with open(to_pts, 'w') as f:
         for i in range(pairs.shape[0]):
             f.write("{} {}\n".format(pairs[i, 3], pairs[i, 2]))
     return pairs
 
 
 def calculate_close_pairs(pts1, pts2, shapes):
-    all_pts = np.concatenate((pts1, pts2))
-    dist = squareform(pdist(all_pts))
-
-    inf = np.max(dist) + 1
-    dist[: pts1.shape[0], : pts1.shape[0]] = inf
-    dist[pts1.shape[0] :, pts1.shape[0] :] = inf
-
-    indices = np.argmin(dist, axis=0)
+    pts1_sort = contour_way(pts1)
+    pts2_sort = contour_way(pts2)
+    upper_point = pts1_sort[np.argmax(pts1_sort, axis=0)[1]]
+    dists = [euclidean(upper_point, p) for p in pts2_sort]
+    min_dist = np.argmin(dists)
+    pts2_sort = pts2_sort[min_dist:] + pts2_sort[:min_dist]
 
     # Scale points back
     shape_from, shape_to = shapes[0], shapes[1]
@@ -90,10 +87,23 @@ def calculate_close_pairs(pts1, pts2, shapes):
             point[1] += np.abs(shape_to[1] - shape_from[1]) / 2
         return point
 
-    pts2 = np.apply_along_axis(scale_back, 0, pts2)
-    all_pts[pts1.shape[0]:] = pts2
-    if pts1.shape[0] < pts2.shape[0]:
-        res = np.concatenate((pts1, all_pts[indices[: pts1.shape[0]]]), axis=1)
-    else:
-        res = np.concatenate((pts2, all_pts[indices[pts1.shape[0] :]]), axis=1)
+    pts2_sort = np.apply_along_axis(scale_back, 0, pts2_sort)
+    sz = min(len(pts1_sort), len(pts2_sort))
+    res = np.concatenate((pts1_sort[:sz], pts2_sort[:sz]), axis=1)
+    return res
+
+def contour_way(points):
+    dists = squareform(pdist(np.concatenate((points, points))))
+    dists = dists[:points.shape[0], :points.shape[0]]
+    min_arg_dists = np.argsort(dists, axis=1)
+    used = [False for _ in range(len(points))]
+    cur_p = 0
+    res = []
+    for _ in range(len(points)):
+        used[cur_p] = True
+        res.append(points[cur_p])
+        for next_p in min_arg_dists[cur_p, :]:
+            if not used[next_p]:
+                cur_p = next_p
+                break
     return res
