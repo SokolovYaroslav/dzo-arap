@@ -54,7 +54,16 @@ def get_points(from_tuple, to_tuple):
     cont_from = masker_from.get_contour(continious=False)
     cont_to = masker_to.get_contour(continious=False)
 
-    return calculate_close_pairs(cont_from, cont_to)
+    pairs = calculate_close_pairs(cont_from, cont_to)
+    from_pts, to_pts = from_tuple[0].replace('.png', '.txt'), to_tuple[0].replace('.png', '.txt')
+    print("Saving points into {}: {} and {}".format(out_dir, from_pts, to_pts))
+    with open(from_pts, 'a') as f:
+        for i in range(pairs.shape[0]):
+            f.write("{} {}\n".format(pairs[i, 0], pairs[i, 1]))
+    with open(to_pts, 'a') as f:
+        for i in range(pairs.shape[0]):
+            f.write("{} {}\n".format(pairs[i, 2], pairs[i, 3]))
+    return
 
 
 def calculate_close_pairs(pts1, pts2):
