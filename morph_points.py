@@ -60,7 +60,7 @@ def get_points(from_tuple, to_tuple, include_edge_points=True,
     cont_to = masker_to.get_contour(continious=False)
 
     pairs = calculate_close_pairs(cont_from, cont_to, (im_from.shape[:2], to_shape[:2]))
-    pairs = pairs[:,:,step]
+    pairs = pairs[::step,:]
 
     height, width = im_from.shape[:2]
     corners = np.array([[0, 0], [0, width-1], [height-1, 0], [height-1, width-1]]).astype(int)
