@@ -22,7 +22,7 @@ def csv2dict(csv):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mask", default=None, help="custom mask path")
-parser.add_argument("--split_body_on_parts", default=False, help="if false grid will be construct once on whole body")
+parser.add_argument("--split_body_on_parts", default=False, type=str2bool, help="if false grid will be construct once on whole body")
 parser.add_argument("--bodypart_mask", default=None, help="bodypart mask path")
 parser.add_argument("--bodypart_thresh", type=float, default=0.075, help="threshold that uses in computing bind mask")
 parser.add_argument("--num_bodypart_points", type=int, default=5, help="num points that will be automatically add at borders of bodyparts")
