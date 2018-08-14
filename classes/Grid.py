@@ -28,38 +28,46 @@ class Grid:
         self._points = {}
         self._boxes = []
 
-        immask = self._image.mask
+        def create_grid(immask):
+            # find borders of image
+            top = self._border(immask)
+            btm = self._image.height - self._border(immask[::-1])
+            lft = self._border(immask.T)
+            rgt = self._image.width - self._border(immask.T[::-1])
 
-        # find borders of image
-        top = self._border(immask)
-        btm = self._image.height - self._border(immask[::-1])
-        lft = self._border(immask.T)
-        rgt = self._image.width - self._border(immask.T[::-1])
+            width = rgt-lft
+            height = btm-top
 
-        width = rgt-lft
-        height = btm-top
+            box_count = (int(math.ceil(width/self.BOX_SIZE)), int(math.ceil(height/self.BOX_SIZE)))
+            box_x = lft - int((box_count[0] * self.BOX_SIZE - width) / 2)
+            box_y = top - int((box_count[1] * self.BOX_SIZE - height) / 2)
 
-        box_count = (int(math.ceil(width/self.BOX_SIZE)), int(math.ceil(height/self.BOX_SIZE)))
-        box_x = lft - int((box_count[0] * self.BOX_SIZE - width) / 2)
-        box_y = top - int((box_count[1] * self.BOX_SIZE - height) / 2)
+            # create Boxes over image
+            for y in range(box_y, btm, self.BOX_SIZE):
+                for x in range(box_x, rgt, self.BOX_SIZE):
+                    if -1 != self._border(immask[y:y+self.BOX_SIZE:1, x:x+self.BOX_SIZE:1]):
+                        if x < 0 or x + self.BOX_SIZE > self._image.width \
+                                or y < 0 or y + self.BOX_SIZE > self._image.height:
+                            continue
 
-        # create Boxes over image
-        for y in range(box_y, btm, self.BOX_SIZE):
-            for x in range(box_x, rgt, self.BOX_SIZE):
-                if -1 != self._border(immask[y:y+self.BOX_SIZE:1, x:x+self.BOX_SIZE:1]):
-                    if x < 0 or x + self.BOX_SIZE > self._image.width \
-                            or y < 0 or y + self.BOX_SIZE > self._image.height:
-                        continue
-
-                    self._boxes.append(
-                        Box(
-                            self.cw,
-                            self._add_point(x, y),
-                            self._add_point(x+self.BOX_SIZE, y),
-                            self._add_point(x+self.BOX_SIZE, y+self.BOX_SIZE),
-                            self._add_point(x, y+self.BOX_SIZE)
+                        self._boxes.append(
+                            Box(
+                                self.cw,
+                                self._add_point(x, y),
+                                self._add_point(x+self.BOX_SIZE, y),
+                                self._add_point(x+self.BOX_SIZE, y+self.BOX_SIZE),
+                                self._add_point(x, y+self.BOX_SIZE)
+                            )
                         )
-                    )
+
+        if len(self._image._masker.segmented_body_parts()) != 0:
+            for part in self._image._masker.segmented_body_parts():
+                immask = self._image._masker.mask2bool(self._image._masker.get_mask(part))
+                create_grid(immask)
+        else:
+            immask = self._image._mask
+            create_grid(immask)
+        
 
         """
         Control points setup
