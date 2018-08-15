@@ -1,3 +1,4 @@
+from classes.utils import get_pose
 import cv2
 import os
 import numpy as np
@@ -10,7 +11,7 @@ class Masker:
     for i in range(len(PARTS)):
         COLORS[PARTS[i]] = 50 * (i + 1)
 
-    def __init__(self, mask_path=None, mask=None):
+    def __init__(self, mask_path=None, keypoints_path=None, mask=None):
         self._mask_path = mask_path
         self._mask_im = None
         self.whole_mask = None
@@ -27,6 +28,10 @@ class Masker:
         else:
             print("Mask.py: Provide either mask as np.array, or path to mask")
             sys.exit(1)
+
+        if keypoints_path is not None:
+            self.keypoints = get_pose(keypoints_path, with_face=True, with_hands=True)
+            print("Initialize masker with keypoints. Shape:", self.keypoints.shape)
 
     def _mask_init(self):
         self.whole_mask = self.mask2bool(self._mask_im[:, :, 0])
@@ -54,7 +59,7 @@ class Masker:
         return self.parts_masks.keys()
 
     def save(self, path):
-        return cv2.imwrite(path, self._mask_im*(255/np.max(self._mask_im)))
+        return cv2.imwrite(path, self._mask_im * (255 / np.max(self._mask_im)))
 
     def get_mask(self, part_name):
         if part_name in self.parts_masks:
@@ -68,7 +73,7 @@ class Masker:
 
     def get_contour(self, parts=["whole"], continious=True):
         # TODO: support getting mask & contour for deformed image
-        #if part not in ["whole", "body", "all"] and \
+        # if part not in ["whole", "body", "all"] and \
         #   part not in self.segmented_body_parts():
         #    print("Can't get contour for {}. No such body part found.".format(part))
         #    return None
@@ -77,36 +82,58 @@ class Masker:
         mask = sum([self.get_mask(part).astype(np.uint8) for part in parts])
         mask = np.clip(mask, 0, 1)
 
-        chain_approx_method = cv2.CHAIN_APPROX_NONE if continious else cv2.CHAIN_APPROX_SIMPLE
-        im2, contours, hierarchy = cv2.findContours(mask*255, cv2.RETR_TREE, chain_approx_method)
+        chain_approx_method = (
+            cv2.CHAIN_APPROX_NONE if continious else cv2.CHAIN_APPROX_SIMPLE
+        )
+        im2, contours, hierarchy = cv2.findContours(
+            mask * 255, cv2.RETR_TREE, chain_approx_method
+        )
         cont_ind = np.argmax(np.array([cont.shape[0] for cont in contours]))
-        contour = contours[cont_ind].reshape(-1, 2)[:,[1,0]]
+        contour = contours[cont_ind].reshape(-1, 2)[:, [1, 0]]
         return contour
 
     def bounding_box(self, part="whole", numpy=True):
         # [y0, x0, y1, x1] Note: y is counted from the top
         contour = np.array(self.get_contour(part))
-        res = [np.min(contour[:,0]), np.min(contour[:,1]), np.max(contour[:,0]), np.max(contour[:,1]) ]
+        res = [
+            np.min(contour[:, 0]),
+            np.min(contour[:, 1]),
+            np.max(contour[:, 0]),
+            np.max(contour[:, 1]),
+        ]
         if numpy:
             res = np.array(res).reshape(2, 2)
         return res
 
     def _center(self):
         bbox = self.bounding_box()
-        return ( (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2 )
+        return ((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2)
 
     def crop(self, box, numpy=True):
         if not numpy:
             box = np.array(box).reshape(2, 2)
-        self._mask_im = self._mask_im[box[0, 0]: box[1,0], box[0,1]: box[1,1]]
+        self._mask_im = self._mask_im[box[0, 0] : box[1, 0], box[0, 1] : box[1, 1]]
         self._mask_init()
 
+        if self.keypoints is not None:
+            self.keypoints = self.keypoints - box[0]
+            self.keypoints[:, 0] = np.clip(
+                self.keypoints[:, 0], 0, box[1, 0] - box[0, 0] - 1
+            )
+            self.keypoints[:, 1] = np.clip(
+                self.keypoints[:, 1], 0, box[1, 1] - box[0, 1] - 1
+            )
 
     def scale(self, width, height):
-        self._mask_im = cv2.resize(self._mask_im.astype(np.uint8)*255, (width, height))
+        prev_shape = self._mask_im.shape[:2]
+        self._mask_im = cv2.resize(
+            self._mask_im.astype(np.uint8) * 255, (width, height)
+        )
         self._mask_im = self.mask2bool(self._mask_im)
         self._mask_init()
-
+        if self.keypoints is not None:
+            self.keypoints[:, 0] = self.keypoints[:, 0] * (height / prev_shape[0])
+            self.keypoints[:, 1] = self.keypoints[:, 1] * (width / prev_shape[1])
 
     def mask2bool(self, mask):
         # TODO: more sophisticated method

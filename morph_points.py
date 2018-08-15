@@ -1,4 +1,5 @@
 from classes.Masker import Masker
+from classes.utils import get_pose
 import cv2
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
@@ -26,48 +27,69 @@ def preprocess(im, masker, size=[0, 0]):
         im = cv2.resize(im, tuple(size[::-1]))
         new_im = np.zeros(tuple(prev_size))
         new_im[offset[0] : offset[0] + size[0], offset[1] : offset[1] + size[1]] = im
+        masker.keypoints = masker.keypoints + np.array(offset)
         im = new_im
     return im, masker, size
 
 
-def get_points(from_tuple, to_tuple, include_edge_points=True,
-               step=1):
-    # Takes two tuples like (im_path, mask_path)
+def get_points(from_tuple, to_tuple, include_edge_points=True, step=1):
+    # Takes two tuples like (im_path, mask_path, kpts_path)
     # Image extension is considered .png
     im_from = cv2.imread(from_tuple[0])
-    masker_from = Masker(from_tuple[1])
+    masker_from = Masker(
+        from_tuple[1], keypoints_path=from_tuple[2] if len(from_tuple) == 3 else None
+    )
     im_from, masker_from, _ = preprocess(im_from, masker_from)
 
     im_to = cv2.imread(to_tuple[0])
-    masker_to = Masker(to_tuple[1])
+    masker_to = Masker(
+        to_tuple[1], keypoints_path=to_tuple[2] if len(to_tuple) == 3 else None
+    )
     im_to, masker_to, to_shape = preprocess(
         im_to, masker_to, size=list(im_from.shape[:2])
     )
-    print(im_to.shape)
 
-    im_path, mask_path = [f.replace(".png", "_processed.png") for f in from_tuple]
+    im_path, mask_path, _ = [f.replace(".png", "_processed.png") for f in from_tuple]
     cv2.imwrite(im_path, im_from)
     masker_from.save(mask_path)
     print("Saved 'from': \n\timage into {}\n\tmask into {}".format(im_path, mask_path))
 
-    im_path, mask_path = [f.replace(".png", "_processed.png") for f in to_tuple]
+    im_path, mask_path, _ = [f.replace(".png", "_processed.png") for f in to_tuple]
     cv2.imwrite(im_path, im_to)
     masker_to.save(mask_path)
     print("Saved 'to': \n\timage into {}\n\tmask into {}".format(im_path, mask_path))
+
+    if len(from_tuple) == 3 and len(to_tuple) == 3:
+        kpts_from = masker_from.keypoints
+        kpts_to = masker_to.keypoints
+        kpts = np.concatenate((kpts_from, kpts_to), axis=1).astype(int)
+        pairs = kpts
 
     masker_to.scale(im_from.shape[1], im_from.shape[0])
     cont_from = masker_from.get_contour(continious=False)
     cont_to = masker_to.get_contour(continious=False)
 
-    pairs = calculate_close_pairs(cont_from, cont_to, (im_from.shape[:2], to_shape[:2]))
-    pairs = pairs[::step,:]
+    contour_pairs = calculate_close_pairs(
+        cont_from, cont_to, (im_from.shape[:2], to_shape[:2])
+    )
+    contour_pairs = contour_pairs[::step, :]
+    pairs = np.concatenate((pairs, contour_pairs))
 
-    height, width = im_from.shape[:2]
-    corners = np.array([[0, 0], [0, width-1], [height-1, 0], [height-1, width-1]]).astype(int)
-    sides = np.array([[height / 2, 0], [height / 2, width-1], [0, width / 2], [height - 1, width / 2]]).astype(int)
-    edge_points = np.concatenate((corners, sides))
-    edge_points = np.repeat(edge_points, 2, axis=1)[:,[0,2,1,3]]
     if include_edge_points:
+        height, width = im_from.shape[:2]
+        corners = np.array(
+            [[0, 0], [0, width - 1], [height - 1, 0], [height - 1, width - 1]]
+        ).astype(int)
+        sides = np.array(
+            [
+                [height / 2, 0],
+                [height / 2, width - 1],
+                [0, width / 2],
+                [height - 1, width / 2],
+            ]
+        ).astype(int)
+        edge_points = np.concatenate((corners, sides))
+        edge_points = np.repeat(edge_points, 2, axis=1)[:, [0, 2, 1, 3]]
         pairs = np.concatenate((edge_points, pairs))
 
     from_pts, to_pts = (
@@ -94,12 +116,10 @@ def calculate_close_pairs(pts1, pts2, shapes):
 
     indices = np.argmin(dist, axis=0)
 
-    # Scale points back
     shape_from, shape_to = shapes[0], shapes[1]
-    # print("Scale from {} to {}".format(shape_from, shape_to))
+    # print("Scale from {} to {}".format(shape_from, shape_to))    
     def scale_back(point):
         if shape_from[1] == shape_to[1]:
-            # differ in 1st, i.e. width
             point[0] += (shape_from[0] - shape_to[0]) / 2
             point[0] = point[0] * (shape_to[0] / shape_from[0])
         else:
@@ -117,5 +137,7 @@ def calculate_close_pairs(pts1, pts2, shapes):
 
 
 if __name__ == "__main__":
-    print("Running get_points() on", sys.argv[1:])
-    get_points((sys.argv[1], sys.argv[2]), (sys.argv[3], sys.argv[4]))
+    # print("Running get_points() on", sys.argv[1:])
+    get_points(
+        (sys.argv[1], sys.argv[2], sys.argv[3]), (sys.argv[4], sys.argv[5], sys.argv[6])
+    )
