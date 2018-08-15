@@ -2,7 +2,7 @@ from classes.Masker import Masker
 from classes.utils import get_pose
 import cv2
 import numpy as np
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist, squareform, euclidean
 import sys
 
 
@@ -107,14 +107,12 @@ def get_points(from_tuple, to_tuple, include_edge_points=True, step=1):
 
 
 def calculate_close_pairs(pts1, pts2, shapes):
-    all_pts = np.concatenate((pts1, pts2))
-    dist = squareform(pdist(all_pts))
-
-    inf = np.max(dist) + 1
-    dist[: pts1.shape[0], : pts1.shape[0]] = inf
-    dist[pts1.shape[0] :, pts1.shape[0] :] = inf
-
-    indices = np.argmin(dist, axis=0)
+    pts1_sort = contour_way(pts1)
+    pts2_sort = contour_way(pts2)
+    upper_point = pts1_sort[np.argmax(pts1_sort, axis=0)[1]]
+    dists = [euclidean(upper_point, p) for p in pts2_sort]
+    min_dist = np.argmin(dists)
+    pts2_sort = pts2_sort[min_dist:] + pts2_sort[:min_dist]
 
     shape_from, shape_to = shapes[0], shapes[1]
     # print("Scale from {} to {}".format(shape_from, shape_to))    
@@ -127,14 +125,26 @@ def calculate_close_pairs(pts1, pts2, shapes):
             point[1] += (shape_from[1] - shape_to[1]) / 2
         return point
 
-    pts2 = np.apply_along_axis(scale_back, 1, pts2)
-    all_pts[pts1.shape[0] :] = pts2.copy()
-    if pts1.shape[0] < pts2.shape[0]:
-        res = np.concatenate((pts1, all_pts[indices[: pts1.shape[0]]]), axis=1)
-    else:
-        res = np.concatenate((pts2, all_pts[indices[pts1.shape[0] :]]), axis=1)
+    pts2_sort = np.apply_along_axis(scale_back, 0, pts2_sort)
+    sz = min(len(pts1_sort), len(pts2_sort))
+    res = np.concatenate((pts1_sort[:sz], pts2_sort[:sz]), axis=1)
     return res
 
+def contour_way(points):
+    dists = squareform(pdist(np.concatenate((points, points))))
+    dists = dists[:points.shape[0], :points.shape[0]]
+    min_arg_dists = np.argsort(dists, axis=1)
+    used = [False for _ in range(len(points))]
+    cur_p = 0
+    res = []
+    for _ in range(len(points)):
+        used[cur_p] = True
+        res.append(points[cur_p])
+        for next_p in min_arg_dists[cur_p, :]:
+            if not used[next_p]:
+                cur_p = next_p
+                break
+    return res
 
 if __name__ == "__main__":
     # print("Running get_points() on", sys.argv[1:])
