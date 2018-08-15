@@ -42,6 +42,7 @@ parser.add_argument("--path", default="assets/frames/greeting_frames/45.png", he
 parser.add_argument("--num_iterations", default=50, help="number of iterations to fit each pose")
 parser.add_argument("--grid", default=False, type=str2bool, help="to show grid pass True")
 parser.add_argument("--save_mask", default=str2bool, help="to save computed mask into masks/")
+parser.add_argument("--outdir", default="out/", help="directory to save warped frames")
 parser.add_argument(
     "--enumerate",
     default=False,
