@@ -66,8 +66,8 @@ def get_points(from_tuple, to_tuple, include_edge_points=True, step=1, contour_p
         pairs = kpts
 
     masker_to.scale(im_from.shape[1], im_from.shape[0])
-    cont_from = masker_from.get_contour(continious=False)
-    cont_to = masker_to.get_contour(continious=False)
+    cont_from = masker_from.get_contour(continious=True)
+    cont_to = masker_to.get_contour(continious=True)
 
     if contour_pairs:
         contour_pairs = calculate_close_pairs(
@@ -76,6 +76,16 @@ def get_points(from_tuple, to_tuple, include_edge_points=True, step=1, contour_p
         contour_pairs = contour_pairs[::step, :]
         pairs = np.concatenate((pairs, contour_pairs))
 
+    img_p_from = draw_points(im_from, pairs[:, [1, 0]], step=3)
+    img_p_to = draw_points(im_to, pairs[:, [3, 2]], step=3)
+    cv2.imwrite(from_tuple[0].replace('.png', '_points.png'), img_p_from)
+    cv2.imwrite(to_tuple[0].replace('.png', '_points.png'), img_p_to)
+
+    height, width = im_from.shape[:2]
+    corners = np.array([[0, 0], [0, width-1], [height-1, 0], [height-1, width-1]]).astype(int)
+    sides = np.array([[height / 2, 0], [height / 2, width-1], [0, width / 2], [height - 1, width / 2]]).astype(int)
+    edge_points = np.concatenate((corners, sides))
+    edge_points = np.repeat(edge_points, 2, axis=1)[:,[0,2,1,3]]
     if include_edge_points:
         height, width = im_from.shape[:2]
         corners = np.array(
@@ -108,13 +118,27 @@ def get_points(from_tuple, to_tuple, include_edge_points=True, step=1, contour_p
 
 
 def calculate_close_pairs(pts1, pts2, shapes):
-    pts1_sort = contour_way(pts1)
-    pts2_sort = contour_way(pts2)
-    upper_point = pts1_sort[np.argmax(pts1_sort, axis=0)[1]]
+    pts1_sort = contour_way(np.array(pts1))
+    pts2_sort = contour_way(np.array(pts2))
+
+    upper_point_pos = np.argmax(pts1_sort, axis=0)[1]
+    upper_point = pts1_sort[upper_point_pos]
     dists = [euclidean(upper_point, p) for p in pts2_sort]
     min_dist = np.argmin(dists)
+    pts1_sort = pts1_sort[upper_point_pos:] + pts1_sort[:upper_point_pos]
     pts2_sort = pts2_sort[min_dist:] + pts2_sort[:min_dist]
 
+    left_point_pos = np.argmin(pts1_sort, axis=0)[0]
+    left_point = pts1_sort[left_point_pos]
+    right_point_pos = np.argmax(pts1_sort, axis=0)[0]
+    dists = [euclidean(left_point, p) for p in pts2_sort]
+    if dists[left_point_pos] > dists[right_point_pos]:
+        pts2_sort = pts2_sort[::-1]
+        pts2_sort = [pts2_sort[0]] + pts2_sort[:-1]
+
+    pts1_sort, pts2_sort = regulirize_length(pts1_sort, pts2_sort)
+
+    # Scale points back
     shape_from, shape_to = shapes[0], shapes[1]
     # print("Scale from {} to {}".format(shape_from, shape_to))    
     def scale_back(point):
@@ -126,9 +150,8 @@ def calculate_close_pairs(pts1, pts2, shapes):
             point[1] += (shape_from[1] - shape_to[1]) / 2
         return point
 
-    pts2_sort = np.apply_along_axis(scale_back, 0, pts2_sort)
-    sz = min(len(pts1_sort), len(pts2_sort))
-    res = np.concatenate((pts1_sort[:sz], pts2_sort[:sz]), axis=1)
+    pts2_sort = np.apply_along_axis(scale_back, 1, pts2_sort)
+    res = np.concatenate((pts1_sort, pts2_sort), axis=1)
     return res
 
 def contour_way(points):
@@ -141,11 +164,35 @@ def contour_way(points):
     for _ in range(len(points)):
         used[cur_p] = True
         res.append(points[cur_p])
-        for next_p in min_arg_dists[cur_p, :]:
-            if not used[next_p]:
-                cur_p = next_p
+        for p in min_arg_dists[cur_p]:
+            if not used[p]:
+                cur_p = p
                 break
     return res
+
+def regulirize_length(pts1, pts2):
+    swap = False
+    if len(pts2) < len(pts1):
+        swap = True
+        pts1, pts2 = pts2, pts1
+    pts2 = pts2 + pts2[:100] 
+    pts2_new = []
+    i = 0
+    for p in pts1:
+        dists = [euclidean(p, _p) for _p in pts2[i:i + 100]]
+        i_new = i + np.argmin(dists)
+        pts2_new.append(pts2[i_new])
+        i = i_new + 1
+    return (pts2_new, pts1) if swap else (pts1, pts2_new)
+
+def draw_points(img, points, step=1):
+    img = img.copy()
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    color = (255, 255, 255)
+    draw_point = lambda img, p, i: cv2.putText(img, str(i), p, font, 0.3, color, 1, cv2.LINE_AA)
+    for i in range(len(points[::step])):
+        draw_point(img, (points[i * step][0], points[i * step][1]), i + 1)
+    return img
 
 if __name__ == "__main__":
     # print("Running get_points() on", sys.argv[1:])
