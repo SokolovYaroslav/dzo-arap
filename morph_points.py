@@ -32,7 +32,7 @@ def preprocess(im, masker, size=[0, 0]):
     return im, masker, size
 
 
-def get_points(from_tuple, to_tuple, include_edge_points=True, step=1):
+def get_points(from_tuple, to_tuple, include_edge_points=True, step=1, contour_pairs=False):
     # Takes two tuples like (im_path, mask_path, kpts_path)
     # Image extension is considered .png
     im_from = cv2.imread(from_tuple[0])
@@ -69,11 +69,12 @@ def get_points(from_tuple, to_tuple, include_edge_points=True, step=1):
     cont_from = masker_from.get_contour(continious=False)
     cont_to = masker_to.get_contour(continious=False)
 
-    contour_pairs = calculate_close_pairs(
-        cont_from, cont_to, (im_from.shape[:2], to_shape[:2])
-    )
-    contour_pairs = contour_pairs[::step, :]
-    pairs = np.concatenate((pairs, contour_pairs))
+    if contour_pairs:
+        contour_pairs = calculate_close_pairs(
+            cont_from, cont_to, (im_from.shape[:2], to_shape[:2])
+        )
+        contour_pairs = contour_pairs[::step, :]
+        pairs = np.concatenate((pairs, contour_pairs))
 
     if include_edge_points:
         height, width = im_from.shape[:2]
