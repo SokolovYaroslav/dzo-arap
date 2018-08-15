@@ -122,7 +122,9 @@ class ImageHelper:
             binder_mask[binder_coords[:, 0], binder_coords[:, 1]] = True
             return binder_mask, border
 
-        if args.background is not None:
+        if args.background_color is not None:
+            self._background = np.zeros_like(self._orig) + args.background_color
+        elif args.background is not None:
             self._background = np.array(Image.open(args.background))
             print(self._background.shape, self._orig.shape)
             diff0 = self._background.shape[0] - self._orig.shape[0]

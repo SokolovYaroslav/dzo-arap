@@ -1,5 +1,6 @@
 from classes.Application import Application
 import argparse
+import numpy as np
 
 
 def str2bool(v):
@@ -19,9 +20,16 @@ def csv2dict(csv):
         return box_sizes
     return None
 
+def background_pixel(string):
+    if string is None:
+        return None
+    ch1, ch2, ch3 = map(int, string.split(','))
+    return np.array([ch1,ch2,ch3])
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--background", default=None, help="custom background path")
+parser.add_argument("--background_color", default=None, type=background_pixel, help="custom background pixel")
 parser.add_argument("--mask", default=None, help="custom mask path")
 parser.add_argument("--bodypart_mask", default=None, help="bodypart mask path")
 parser.add_argument("--bodypart_thresh", type=float, default=0.075, help="threshold that uses in computing bind mask")
