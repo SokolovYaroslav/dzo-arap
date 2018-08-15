@@ -21,6 +21,7 @@ def csv2dict(csv):
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--background", default=None, help="custom background path")
 parser.add_argument("--mask", default=None, help="custom mask path")
 parser.add_argument("--bodypart_mask", default=None, help="bodypart mask path")
 parser.add_argument("--bodypart_thresh", type=float, default=0.075, help="threshold that uses in computing bind mask")
