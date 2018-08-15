@@ -3,7 +3,7 @@ import os
 import json
 
 
-def get_poses(kpts_dir, with_hands = False):
+def get_poses(kpts_dir, with_hands=False, interpolate_hands=False):
     kpt_files = os.listdir(kpts_dir)
     kpt_files.sort(key=lambda e: int(e.split('_')[0]))
     poses = []
@@ -16,11 +16,23 @@ def get_poses(kpts_dir, with_hands = False):
         if with_hands:
             l_hand = res['people'][0]['hand_left_keypoints_2d']
             r_hand = res['people'][0]['hand_right_keypoints_2d']
-            # appending 12'th pointlocated on the end of middle finger
+            # appending 12'th point, located on the end of middle finger
             xs.append(l_hand[33])
             ys.append(l_hand[34])
             xs.append(r_hand[33])
             ys.append(r_hand[34])
+        if interpolate_hands:
+            xs.append((xs[2] + xs[3]) / 2)
+            xs.append((xs[3] + xs[4]) / 2)
+            xs.append((xs[5] + xs[6]) / 2)
+            xs.append((xs[6] + xs[7]) / 2)
+
+            ys.append((ys[2] + ys[3]) / 2)
+            ys.append((ys[3] + ys[4]) / 2)
+            ys.append((ys[5] + ys[6]) / 2)
+            ys.append((ys[6] + ys[7]) / 2)
+
+
         poses.append([xs, ys])
     return np.array(poses)
 

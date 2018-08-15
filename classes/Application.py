@@ -73,13 +73,17 @@ class Application:
     def bind(self, event, fn):
         self._canvas.bind(event, fn)
 
+    def custom_save(self, epoch):
+        path = 'out/'+str(epoch)+'.png'
+        save_image(path, self._image._data)
+
     def run(self):
         self._grid = Grid(self._cw, self._image, self._args)
 
 
-        poses = get_poses(self._args.keypoints_dir, with_hands=True)
+        poses = get_poses(self._args.keypoints_dir, with_hands=True, interpolate_hands=True)
         self._handles, self._foundmask = self.add_bunch(poses[0])
-        print(self._foundmask)
+        self._smoothed = smooth_poses(poses[1:], win_length=5)
 
 
         self._add_border_points(self._args.num_bodypart_points, self._args.visible_bodypart_points)
@@ -88,10 +92,10 @@ class Application:
         self._grid.draw()
 
         global epoch, it
-        it = 1
+        it = epoch = 1
+        self.custom_save(epoch)
         self.move_bunch(1)
         print('Epoch {0} started'.format(1))
-        epoch = 2
 
         self._run_once()
 
@@ -122,9 +126,10 @@ class Application:
             it += 1
             if it >= int(self._args.num_iterations):
                 it = 1
-                self.move_bunch(epoch)
-                print('Epoch {0} started'.format(epoch))
                 epoch += 1
+                self.custom_save(epoch)
+                print('Epoch {0} started'.format(epoch))
+                self.move_bunch(epoch)
 
         self._loop = self._window.after(1, self._run_once)
 
@@ -151,7 +156,7 @@ class Application:
             if not f:
                 self._image.remove_handle(k)
                 del new_handles[k]
-
+        print(foundmask)
         return (new_handles, foundmask)
 
     def _add_border_points(self, num_points=5, visible=False):
@@ -198,3 +203,16 @@ class Application:
             self._image.move_handle(h_id, xs[i], ys[i])
             self._grid.set_control_target(h_id, xs[i], ys[i])
             i += 1
+
+    def morph_refresh(self):
+        morph_path = self._args.morph_path
+        start = self._args.morphing_start_frame
+        stop = self._args.morphing_end_frame
+        if stop == -1:
+            pass
+
+        morph_image_paths = os.listdir(path)
+        files_to_set = list(map(int, np.linspace(0, len(morph_image_paths), stop - start)))
+
+        while start <= epoch <= stop:
+            new_image = np.array(Image.open())
