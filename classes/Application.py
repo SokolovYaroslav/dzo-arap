@@ -10,6 +10,7 @@ import cv2
 import os
 import numpy as np
 from collections import OrderedDict
+from PIL import Image
 
 def save_image(path, img):
     dir = os.path.dirname(path)
@@ -211,8 +212,11 @@ class Application:
         if stop == -1:
             pass
 
-        morph_image_paths = os.listdir(path)
+        morph_image_paths = os.listdir(morph_path)
         files_to_set = list(map(int, np.linspace(0, len(morph_image_paths), stop - start)))
 
-        while start <= epoch <= stop:
+        while True:
+            if not start <= epoch <= stop:
+                yield
+                continue
             new_image = np.array(Image.open())
