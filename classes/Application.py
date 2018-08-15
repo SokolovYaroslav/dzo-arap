@@ -74,7 +74,7 @@ class Application:
         self._canvas.bind(event, fn)
 
     def custom_save(self, epoch):
-        path = 'out/'+str(epoch)+'.png'
+        path = 'out_hawaii_bpt/'+str(epoch)+'.png'
         save_image(path, self._image._data)
 
     def run(self):
