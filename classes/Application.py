@@ -79,7 +79,7 @@ class Application:
 
         poses = get_poses(self._args.keypoints_dir, with_hands=True)
         self._handles, self._foundmask = self.add_bunch(poses[0])
-        print(self._foundmask)
+        self._smoothed = smooth_poses(poses[1:], win_length=5)
 
 
         self._add_border_points(self._args.num_bodypart_points, self._args.visible_bodypart_points)
@@ -147,11 +147,12 @@ class Application:
                 new_handles[i] = (ptx, pty)
             foundmask = self._grid.create_bunch_cp(new_handles=new_handles)
 
+        foundmask[2] = False
         for k, f in zip(list(new_handles.keys()), foundmask):
             if not f:
                 self._image.remove_handle(k)
                 del new_handles[k]
-
+        print(foundmask)
         return (new_handles, foundmask)
 
     def _add_border_points(self, num_points=5, visible=False):
