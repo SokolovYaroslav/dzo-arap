@@ -205,7 +205,7 @@ class Application:
         start = self._args.morphing_start_frame
         stop = self._args.morphing_end_frame
         if stop == -1:
-            
+            pass
 
         morph_image_paths = os.listdir(path)
         files_to_set = list(map(int, np.linspace(0, len(morph_image_paths), stop - start)))
