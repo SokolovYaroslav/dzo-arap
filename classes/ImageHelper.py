@@ -122,7 +122,19 @@ class ImageHelper:
             binder_mask[binder_coords[:, 0], binder_coords[:, 1]] = True
             return binder_mask, border
 
-        self._background = self._orig * (1 - self._mask[:, :, np.newaxis])
+        if args.background is not None:
+            self._background = np.array(Image.open(args.background))
+            print(self._background.shape, self._orig.shape)
+            diff0 = self._background.shape[0] - self._orig.shape[0]
+            diff1 = self._background.shape[1] - self._orig.shape[1]
+            if diff0 != 0:
+                self._background = self._background[diff0//2:-diff0//2,:,:]
+            if diff1 != 0:
+                self._background = self._background[:,diff1//2:-diff1//2,:]
+            print(self._background.shape)
+            assert self._background.shape == self._orig.shape
+        else:
+            self._background = self._orig * (1 - self._mask[:, :, np.newaxis])
         #######################
         #TODO: SOME INPAINTING#
         #######################

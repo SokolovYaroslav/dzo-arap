@@ -203,3 +203,16 @@ class Application:
             self._image.move_handle(h_id, xs[i], ys[i])
             self._grid.set_control_target(h_id, xs[i], ys[i])
             i += 1
+
+    def morph_refresh(self):
+        morph_path = self._args.morph_path
+        start = self._args.morphing_start_frame
+        stop = self._args.morphing_end_frame
+        if stop == -1:
+            pass
+
+        morph_image_paths = os.listdir(path)
+        files_to_set = list(map(int, np.linspace(0, len(morph_image_paths), stop - start)))
+
+        while start <= epoch <= stop:
+            new_image = np.array(Image.open())

@@ -21,6 +21,7 @@ def csv2dict(csv):
 
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--background", default=None, help="custom background path")
 parser.add_argument("--mask", default=None, help="custom mask path")
 parser.add_argument("--bodypart_mask", default=None, help="bodypart mask path")
 parser.add_argument("--bodypart_thresh", type=float, default=0.075, help="threshold that uses in computing bind mask")
@@ -42,6 +43,9 @@ parser.add_argument(
 parser.add_argument(
     "--control_weight", default=100000, type=int, help="control weight for grid"
 )
+parser.add_argument("--morph_path", default=None, help="path to morphing frames")
+parser.add_argument("--morphing_start_frame", default=0, help="TODO:meh")
+parser.add_argument("--morphing_end_frame", default=-1, help="pass -1 for last frame")
 
 app = Application(parser.parse_args())
 
