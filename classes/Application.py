@@ -73,6 +73,10 @@ class Application:
     def bind(self, event, fn):
         self._canvas.bind(event, fn)
 
+    def custom_save(self, epoch):
+        path = 'out/'+str(epoch)+'.png'
+        save_image(path, self._image._data)
+
     def run(self):
         self._grid = Grid(self._cw, self._image, self._args)
 
@@ -88,10 +92,10 @@ class Application:
         self._grid.draw()
 
         global epoch, it
-        it = 1
+        it = epoch = 1
+        self.custom_save(epoch)
         self.move_bunch(1)
         print('Epoch {0} started'.format(1))
-        epoch = 2
 
         self._run_once()
 
@@ -122,9 +126,10 @@ class Application:
             it += 1
             if it >= int(self._args.num_iterations):
                 it = 1
-                self.move_bunch(epoch)
-                print('Epoch {0} started'.format(epoch))
                 epoch += 1
+                self.custom_save(epoch)
+                print('Epoch {0} started'.format(epoch))
+                self.move_bunch(epoch)
 
         self._loop = self._window.after(1, self._run_once)
 
@@ -147,7 +152,6 @@ class Application:
                 new_handles[i] = (ptx, pty)
             foundmask = self._grid.create_bunch_cp(new_handles=new_handles)
 
-        foundmask[2] = False
         for k, f in zip(list(new_handles.keys()), foundmask):
             if not f:
                 self._image.remove_handle(k)
