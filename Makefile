@@ -1,11 +1,11 @@
 CXX=g++
-OPT = -O3
+OPT = -O3 -fPIC --std=c++17
 
 CXXFLAGS = $(INCLUDE_FLAG) $(OPT)
 
 all: project
 
 project: arap.cpp
-	$(CXX) -fPIC -c -o arap.o $<
-	$(CXX) -shared -o libarap.dll arap.o $(LIB_FLAGS)
+	$(CXX) $(CXXFLAGS) -c -o arap.o $<
+	$(CXX) $(CXXFLAGS) -shared -o libarap arap.o $(LIB_FLAGS)
 

@@ -1,9 +1,12 @@
+#pragma GCC optimize("O3,unroll-loops,Ofast")
+#pragma GCC target("sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx,avx,tune=native")
+
 #include <cstdio>
 #include <cstring>
 #include <cmath>
 #include <algorithm>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <bitset>
 #include <queue>
 
@@ -100,7 +103,7 @@ void dot(double * homography, float x, float y, float &rx, float &ry) {
 }
 
 //
-void store(std::map<int,int> &left, std::map<int,int> &right, int x, int y) {
+void store(std::unordered_map<int,int> &left, std::unordered_map<int,int> &right, int x, int y) {
     if (left.count(y) > 0) {
         if (x < left[y]) {
             left[y] = x;
@@ -112,8 +115,8 @@ void store(std::map<int,int> &left, std::map<int,int> &right, int x, int y) {
         right[y] = x;
     }
 }
-void points(std::map<int, int> &left, std::map<int,int> &right, bool swap, int x0, int y0, int x1, int y1) {
-
+void points(std::unordered_map<int, int> &left, std::unordered_map<int,int> &right,
+                bool swap, int x0, int y0, int x1, int y1) {
     if (swap) {
         std::swap(x0, y0);
         std::swap(x1, y1);
@@ -157,7 +160,8 @@ void points(std::map<int, int> &left, std::map<int,int> &right, bool swap, int x
         }
     }
 }
-extern "C" void rasterize(int * corners, std::map<int,int> &left, std::map<int,int> &right) {
+extern "C" void rasterize(int * corners, std::unordered_map<int,int> &left,
+    std::unordered_map<int,int> &right) {
     /*
     Bresenham's line
     http://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
@@ -179,15 +183,18 @@ extern "C" void rasterize(int * corners, std::map<int,int> &left, std::map<int,i
 //
 extern "C" void project(double * homography, bool * mask, char * orig, char * data, int width, int height, int * corners) {
 
-    std::map<int,int> left;
-    std::map<int,int> right;
+    std::unordered_map<int,int> left;
+    std::unordered_map<int,int> right;
+    left.reserve(128);
+    left.max_load_factor(0.25);
+    right.reserve(128);
+    right.max_load_factor(0.25);
+
     rasterize(corners, left, right);
 
     int max_index = height*width*3;
 
-    std::map<int,int>::iterator it;
-
-    for (it = left.begin(); it != left.end(); ++it) {
+    for (auto it = left.begin(); it != left.end(); ++it) {
         int y = it->first;
         int x_left = it->second;
         int x_right = right[y];

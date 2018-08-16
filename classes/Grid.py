@@ -15,9 +15,12 @@ class Grid:
     iter = 0
     id = None
 
-    def __init__(self, cw, image):
+    def __init__(self, cw, image, args, gui=True):
 
-        self.visible = True
+        if gui:
+            self.visible = args.grid
+        self.BOX_SIZE = int(args.box_size)
+        self.CONTROL_WEIGHT = int(args.control_weight)
 
         self.cw = cw
 
@@ -25,38 +28,51 @@ class Grid:
         self._points = {}
         self._boxes = []
 
-        immask = self._image.mask
+        def create_grid(immask, box_size):
+            # find borders of image
+            top = self._border(immask)
+            btm = self._image.height - self._border(immask[::-1])
+            lft = self._border(immask.T)
+            rgt = self._image.width - self._border(immask.T[::-1])
 
-        # find borders of image
-        top = self._border(immask)
-        btm = self._image.height - self._border(immask[::-1])
-        lft = self._border(immask.T)
-        rgt = self._image.width - self._border(immask.T[::-1])
+            width = rgt-lft
+            height = btm-top
 
-        width = rgt-lft
-        height = btm-top
+            box_count = (int(math.ceil(width / box_size)), int(math.ceil(height / box_size)))
+            box_x = lft - int((box_count[0] * box_size - width) / 2)
+            box_y = top - int((box_count[1] * box_size - height) / 2)
 
-        box_count = (int(math.ceil(width/self.BOX_SIZE)), int(math.ceil(height/self.BOX_SIZE)))
-        box_x = lft - int((box_count[0] * self.BOX_SIZE - width) / 2)
-        box_y = top - int((box_count[1] * self.BOX_SIZE - height) / 2)
+            # create Boxes over image
+            for y in range(box_y, btm, box_size):
+                for x in range(box_x, rgt, box_size):
+                    if -1 != self._border(immask[y:y+box_size:1, x:x+box_size:1]):
+                        if x < 0 or x + box_size > self._image.width \
+                                or y < 0 or y + box_size > self._image.height:
+                            continue
 
-        # create Boxes over image
-        for y in range(box_y, btm, self.BOX_SIZE):
-            for x in range(box_x, rgt, self.BOX_SIZE):
-                if -1 != self._border(immask[y:y+self.BOX_SIZE:1, x:x+self.BOX_SIZE:1]):
-                    if x < 0 or x + self.BOX_SIZE > self._image.width \
-                            or y < 0 or y + self.BOX_SIZE > self._image.height:
-                        continue
-
-                    self._boxes.append(
-                        Box(
-                            self.cw,
-                            self._add_point(x, y),
-                            self._add_point(x+self.BOX_SIZE, y),
-                            self._add_point(x+self.BOX_SIZE, y+self.BOX_SIZE),
-                            self._add_point(x, y+self.BOX_SIZE)
+                        self._boxes.append(
+                            Box(
+                                self.cw,
+                                self._add_point(x, y),
+                                self._add_point(x+box_size, y),
+                                self._add_point(x+box_size, y+box_size),
+                                self._add_point(x, y+box_size)
+                            )
                         )
-                    )
+
+        if len(self._image._masker.segmented_body_parts()) != 0 and args.split_body_on_parts:
+            for part in self._image._masker.segmented_body_parts():
+                immask = self._image._masker.mask2bool(self._image._masker.get_mask(part))
+                if args.bodyparts_box_sizes is not None:
+                    box_size = args.bodyparts_box_sizes[part]
+                else:
+                    box_size = self.BOX_SIZE
+                create_grid(immask, box_size)
+        else:
+            immask = self._image._mask
+            box_size = self.BOX_SIZE
+            create_grid(immask, box_size)
+        
 
         """
         Control points setup
@@ -163,6 +179,19 @@ class Grid:
 
         return False
 
+    def create_bunch_cp(self, new_handles):
+        # TODO: rewrite cause it's slow for now
+        for i, h_obj in new_handles.items():
+            x = h_obj[0]
+            y = h_obj[1]
+            for box in self._boxes:
+                if box.has_point(x, y):
+                    control = box.get_closest_boundary(x, y)
+                    control.weight = self.CONTROL_WEIGHT
+                    self._controls[i] = [control, (control.x, control.y),
+                                                 (control.x - x, control.y - y)]
+        self._update_weights()
+
     def remove_control_point(self, handle_id):
         if handle_id in self._controls:
             del self._controls[handle_id]
@@ -204,8 +233,9 @@ class Grid:
         Create projection of current state
         Image data are properly updated
         """
+        self._image.clear()
+        #self.cw.clear(self._image._orig, self._image._data, self._image.width, self._image.height)
 
-        self.cw.clear(self._image._orig, self._image._data, self._image.width, self._image.height)
-
+        pr = lambda box: box.project(self._image)
         for box in self._boxes:
-            box.project(self._image)
+            pr(box)
