@@ -140,7 +140,7 @@ class ImageHelper:
         #######################
         #TODO: SOME INPAINTING#
         #######################
-        if len(self._masker.segmented_body_parts()) != 0:
+        if len(self._masker.segmented_body_parts()) != 0 and args.split_body_on_parts:
             self._borders = []
             body_mask = self._masker.mask2bool(self._masker.body_mask)
             body_aug_mask = body_mask.copy()

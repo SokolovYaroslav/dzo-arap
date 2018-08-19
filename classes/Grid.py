@@ -61,8 +61,13 @@ class Grid:
                             )
                         )
 
+<<<<<<< HEAD
         if len(self._image._masker.segmented_body_parts()) != 0:
             for part in list(self._image._masker.segmented_body_parts()):
+=======
+        if len(self._image._masker.segmented_body_parts()) != 0 and args.split_body_on_parts:
+            for part in self._image._masker.segmented_body_parts():
+>>>>>>> 11f69a933b484ef17a7a1bd81a51b34d8050db2d
                 immask = self._image._masker.mask2bool(self._image._masker.get_mask(part))
                 if args.bodyparts_box_sizes is not None:
                     box_size = args.bodyparts_box_sizes[part]

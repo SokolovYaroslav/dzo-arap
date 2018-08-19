@@ -4,7 +4,8 @@ make && python main.py --path assets/frames/slow_raise/1.png \
                        --background_color 128,128,128 \
                        --mask masks/handwave_mask.png \
                        --background assets/tomswallpapers.com-27225.jpg \
-                       --keypoints_dir assets/frames/slow_raise_jsons \
+                       --keypoints_dir assets/frames/slow_raise_jsons 
+                       --split_body_on_parts True \
                        --visible_bodypart_points True \
                        --num_bodypart_points 5 \
                        --bodyparts_box_sizes 32,25,25,32,32 \
