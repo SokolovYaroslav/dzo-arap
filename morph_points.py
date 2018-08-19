@@ -2,7 +2,7 @@ from classes.Masker import Masker
 from classes.utils import get_pose
 import cv2
 import numpy as np
-from scipy.spatial.distance import pdist, squareform, euclidean
+from scipy.spatial.distance import pdist, squareform, euclidean, cdist
 import sys
 
 
@@ -136,7 +136,7 @@ def calculate_close_pairs(pts1, pts2, shapes):
         pts2_sort = pts2_sort[::-1]
         pts2_sort = [pts2_sort[0]] + pts2_sort[:-1]
 
-    pts1_sort, pts2_sort = regulirize_length(pts1_sort, pts2_sort)
+    pts1_sort, pts2_sort = find_corresponding(pts1_sort, pts2_sort)
 
     # Scale points back
     shape_from, shape_to = shapes[0], shapes[1]
@@ -170,19 +170,33 @@ def contour_way(points):
                 break
     return res
 
-def regulirize_length(pts1, pts2):
+def find_corresponding(pts1, pts2):
     swap = False
-    if len(pts2) < len(pts1):
-        swap = True
+    if len(pts1) == len(pts2):
+        return pts1, pts2
+    elif len(pts1) > len(pts2):
         pts1, pts2 = pts2, pts1
-    pts2 = pts2 + pts2[:100] 
+        swap = True
+    n = len(pts1)
+    m = len(pts2)
+    dists = cdist(pts1, pts2)
+    inf = np.sum(dists)
+    dp = np.full(dists.shape, inf)
+    dp[0][0] = dists[0][0]
+    for i in range(1, m):
+        dp[0][i] = min(dp[0][i - 1], dists[0][i])
+    for i in range(1, n):
+        dp[i][i] = dp[i - 1][i - 1] + dists[i][i]
+        for j in range(i + 1, m):
+            dp[i][j] = min(dp[i][j - 1], dp[i - 1][j - 1] + dists[i][j])
     pts2_new = []
-    i = 0
-    for p in pts1:
-        dists = [euclidean(p, _p) for _p in pts2[i:i + 100]]
-        i_new = i + np.argmin(dists)
-        pts2_new.append(pts2[i_new])
-        i = i_new + 1
+    j = m
+    for i in range(n - 1, 0, -1):
+        min_pos = np.argmin(dp[i][:j])
+        pts2_new.append(pts2[min_pos])
+        j = min_pos
+    pts2_new = [pts2[0]] + pts2_new[::-1]
+    print(len(pts1), len(pts2_new))
     return (pts2_new, pts1) if swap else (pts1, pts2_new)
 
 def draw_points(img, points, step=1):
